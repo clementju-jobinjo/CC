@@ -1,0 +1,23 @@
+class Fibonacci { 
+  public static void main ( String [] args ) {
+	  System.out.println(new Fib().Fibonacci(8));
+  }
+}
+
+class Fib {
+  public int Fibonacci(int n) {
+	  int retval;
+	  
+	  if (n < 2) 
+	  { 
+	  	retval = 1;
+	  } 
+	  else 
+	  {
+		  	retval = (this.Fibonacci(n - 1)) + (this.Fibonacci(n - 2));
+	  }
+	  
+	  return retval;
+  }
+}
+

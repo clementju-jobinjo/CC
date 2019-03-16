@@ -1,0 +1,35 @@
+/**
+ * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
+ */options{  JDK_VERSION = "1.8";  static = false; }PARSER_BEGIN(MiniJavaImpl)package ch.unibe.scg.javacc;
+
+import ch.unibe.scg.minijava.MiniJava;public class MiniJavaImpl implements MiniJava{}PARSER_END(MiniJavaImpl)
+
+// Placeholders so everything compiles. Remove/replace those.
+void Goal() :
+{ }
+{ < EOF > }
+void ClassDeclaration() :
+{ }
+{ < EOF > }
+void VarDeclaration() :
+{ }
+{ < EOF > }
+void MethodDeclaration() :
+{ }
+{ < EOF > }
+void Type() :
+{ }
+{ < EOF > }
+void Statement() :
+{ }
+{ < EOF > }
+void Expression() :
+{ }
+{ < EOF > }
+void Identifier() :
+{ }
+{ < EOF > }
+void MainClass() :
+{ }
+{ < EOF > }
+// End placeholders.SKIP :{  " "| "\r"| "\t"| "\n"}
