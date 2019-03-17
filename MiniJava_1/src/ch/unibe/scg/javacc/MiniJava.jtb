@@ -7,29 +7,84 @@ import ch.unibe.scg.minijava.MiniJava;public class MiniJavaImpl implements Min
 // Placeholders so everything compiles. Remove/replace those.
 void Goal() :
 { }
-{ < EOF > }
+{
+  MainClass() ( ClassDeclaration() )* < EOF >
+}
 void ClassDeclaration() :
 { }
-{ < EOF > }
+{
+  "class" Identifier() ( "extends" Identifier() )? "{" ( VarDeclaration() )* ( MethodDeclaration() )* "}"
+}
 void VarDeclaration() :
 { }
-{ < EOF > }
+{
+  Type() Identifier() ";"
+}
 void MethodDeclaration() :
 { }
-{ < EOF > }
+{
+  "public" Type() Identifier() "(" (Type() Identifier() ("," Type() Identifier() )* )? ")" "{" ( LOOKAHEAD(2) VarDeclaration() )* (Statement() )* "return" Expression() ";" "}"
+}
 void Type() :
 { }
-{ < EOF > }
+{
+  LOOKAHEAD(2) "int" "[" "]"
+  | "int"
+  | "boolean"
+  | "void"
+  | Identifier()
+}
 void Statement() :
 { }
-{ < EOF > }
-void Expression() :
+{
+  "{" ( Statement() )* "}"
+  | "if" "(" Expression() ")" Statement() "else" Statement()
+  | "while" "(" Expression() ")" Statement()
+  | "System.out.println" "(" Expression() ")" ";"
+  | LOOKAHEAD(2) Identifier() "=" Expression() ";"
+  | Identifier() "[" Expression() "]" "=" Expression() ";"
+}
+void Expression():
 { }
-{ < EOF > }
+{
+  LOOKAHEAD(2) "new" "int" "[" Expression() "]" ExpPrime()
+  | "new" Identifier() "(" ")" ExpPrime()
+  | Identifier() ExpPrime()
+  | "!" Expression() ExpPrime()
+  | "(" Expression() ")" ExpPrime()
+  | < INTEGER_LITERAL > ExpPrime()
+  | "this" ExpPrime()
+  | "true" ExpPrime()
+  | "false" ExpPrime()
+}
+void ExpPrime():
+{ }
+{
+  ( "&&" | "<" | "+" | "-" | "*" | ">" ) Expression() ExpPrime()
+  | "[" Expression() "]" ExpPrime()
+  | LOOKAHEAD(2) "." "length" ExpPrime()
+  | "." Identifier() "(" ( Expression() ( "," Expression() )* )? ")" ExpPrime()
+  | Epsilon()
+}
 void Identifier() :
 { }
-{ < EOF > }
+{ < IDENTIFIER > }
 void MainClass() :
 { }
-{ < EOF > }
-// End placeholders.SKIP :{  " "| "\r"| "\t"| "\n"}
+{ "class" Identifier() "{" "public" "static" "void" "main" "(" "String" "[" "]" Identifier() ")" "{" ( Statement() )? "}" "}" }
+void Epsilon() :
+{ }
+{
+  { }
+}
+
+// End placeholders.
+
+TOKEN : /* INTEGER_LITERAL */
+{
+  < INTEGER_LITERAL: ( ["1"-"9"] (["0"-"9"])* | "0" ) >}
+
+TOKEN : /* IDENTIFIER */
+{  < IDENTIFIER: [ "a"-"z", "A"-"Z" ] ( [ "a"-"z", "A"-"Z" ] | [ "0"-"9" ] | "_" )* >
+}SKIP :{  " "| "\r"| "\t"| "\n"
+| <COMMENT: "//" (~["\n","\r"])* ("\n" | "\r" | "\r\n")>}
