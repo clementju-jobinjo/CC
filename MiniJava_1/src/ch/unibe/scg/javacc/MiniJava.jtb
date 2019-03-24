@@ -69,6 +69,11 @@ void ExpPrime():
 void Identifier() :
 { }
 { < IDENTIFIER > }
+
+void IntegerLiteral():
+{}
+{ < INTEGER_LITERAL > }
+
 void MainClass() :
 { }
 { "class" Identifier() "{" "public" "static" "void" "main" "(" "String" "[" "]" Identifier() ")" "{" ( Statement() )? "}" "}" }

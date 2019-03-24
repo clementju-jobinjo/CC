@@ -12,10 +12,12 @@ import ch.unibe.scg.javacc.visitor.*;
 public class PrettyPrinter extends DepthFirstVoidVisitor {
 	// Add your implementation here
 	private StringBuffer strBuffer;
+	private int indent;
 	
 	public PrettyPrinter() {
 		super();
 		this.strBuffer = new StringBuffer();
+		this.indent=0;
 	}
 
 	public String prettyPrint(Object node) {
@@ -54,16 +56,18 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	// "class" Identifier() ( "extends" Identifier() )? "{" ( VarDeclaration() )* ( MethodDeclaration() )* "}"
 	@Override
 	public void visit(ClassDeclaration classDeclaration) {
+
 		// "class"
 		NodeToken nodeToken = classDeclaration.nodeToken;
 		nodeToken.accept(this);
+		space();
 		
 		// Identifier()
 		Identifier identifier = classDeclaration.identifier;
 		identifier.accept(this);
+		space();
 		
 		// ( "extends" Identifier() )?
-		// ? 
 		NodeOptional nodeOptional = classDeclaration.nodeOptional;
 		if (nodeOptional.present()) {
 			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
@@ -79,6 +83,8 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		// "{"
 		NodeToken nodeToken1 = classDeclaration.nodeToken1;
 		nodeToken1.accept(this);
+		newLine(indent);
+
 		
 		//( VarDeclaration() )*
 		NodeListOptional nodeListOptional = classDeclaration.nodeListOptional;
@@ -88,6 +94,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 				node.accept(this);
 			}
 		}
+		space();
 		
 		// ( MethodDeclaration() )*
 		NodeListOptional nodeListOptional1 = classDeclaration.nodeListOptional1;
@@ -108,6 +115,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(VarDeclaration varDeclaration) {
 		varDeclaration.type.accept(this);
+		space();
 		varDeclaration.identifier.accept(this);
 		varDeclaration.nodeToken.accept(this);
 	}
@@ -117,13 +125,98 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	// "{" ( LOOKAHEAD(2) VarDeclaration() )* (Statement() )* "return" Expression() ";" "}"
 	@Override
 	public void visit(MethodDeclaration methodDeclaration) {
+		indent+=3;
+		newLine(indent);
+		// public
+		methodDeclaration.nodeToken.accept(this);
+		space();
 		
+		// Type()
+		methodDeclaration.type.accept(this);
+		space();
+		
+		// Identifier()
+		methodDeclaration.identifier.accept(this);
+		
+		
+		// (
+		methodDeclaration.nodeToken1.accept(this);
+		
+		// (Type() Identifier() ("," Type() Identifier() )* )?
+		NodeOptional nodeOptional = methodDeclaration.nodeOptional;
+		if (nodeOptional.present()) {
+			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
+			
+			// "Type"
+			INode nodeType = nodeSequence.elementAt(0);
+			nodeType.accept(this);
+			
+			// Identifier
+			INode nodeIdentifier = nodeSequence.elementAt(1);
+			nodeIdentifier.accept(this);
+			
+			//  ("," Type() Identifier() )*
+			NodeListOptional nodeListOptional = (NodeListOptional) nodeSequence.elementAt(2);
+			if (nodeListOptional.present()) {
+				for (int i = 0; i < nodeListOptional.size(); i++) {
+					INode node = nodeListOptional.elementAt(i);
+					node.accept(this);
+				}
+			}
+		}
+		// )
+		methodDeclaration.nodeToken2.accept(this);
+		
+		// {
+		methodDeclaration.nodeToken3.accept(this);
+		indent+=2;
+		newLine(indent);
+		
+		// ( LOOKAHEAD(2) VarDeclaration() )*
+		NodeListOptional nodeListOptional = methodDeclaration.nodeListOptional;
+		if (nodeListOptional.present()) {
+			for (int i = 0; i < nodeListOptional.size(); i++) {
+				INode node = nodeListOptional.elementAt(i);
+				node.accept(this);
+			}
+		}
+		
+		// (Statement() )*
+		NodeListOptional nodeListOptional2 = methodDeclaration.nodeListOptional1;
+		if (nodeListOptional2.present()) {
+			for (int i = 0; i < nodeListOptional2.size(); i++) {
+				INode node = nodeListOptional2.elementAt(i);
+				node.accept(this);
+			}
+		}
+		
+		// return
+		methodDeclaration.nodeToken4.accept(this);
+		space();
+		
+		// Expression()
+		methodDeclaration.expression.accept(this);
+		
+		// ;
+		methodDeclaration.nodeToken5.accept(this);
+		indent-=2;
+		newLine(indent);
+
+		// }
+		methodDeclaration.nodeToken6.accept(this);
+		newLine(indent);
 	}
 	
 	// Type
 	// LOOKAHEAD(2) "int" "[" "]" | "int" | "boolean" | "void" | Identifier()
 	@Override
 	public void visit(Type type) {
+		if(type.nodeChoice.which==2) {
+			strBuffer.append("bool");
+		}
+		else {
+			type.nodeChoice.choice.accept(this);
+		}
 		
 	}
 	
@@ -136,7 +229,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	//	  | Identifier() "[" Expression() "]" "=" Expression() ";"
 	@Override
 	public void visit(Statement statement) {
-		
+		statement.nodeChoice.choice.accept(this);
 	}
 	
 	// Expression
@@ -151,7 +244,45 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	//	  | "false" ExpPrime()
 	@Override
 	public void visit(Expression expression) {
+		expression.nodeChoice.choice.accept(this);
 		
+	}
+	
+	// ExpPrime
+	//( "&&" | "<" | "+" | "-" | "*" | ">" ) Expression() ExpPrime()
+	//	| "[" Expression() "]" ExpPrime()
+	//	| LOOKAHEAD(2) "." "length" ExpPrime()
+	//	| "." Identifier() "(" ( Expression() ( "," Expression() )* )? ")" ExpPrime()
+	//	| Epsilon()
+	@Override
+	public void visit(ExpPrime expPrime) {
+		if(expPrime.nodeChoice.which==0) {
+			NodeSequence nodeSequence = (NodeSequence) expPrime.nodeChoice.choice;
+			space();
+			INode operator = nodeSequence.elementAt(0);
+			operator.accept(this);
+			space();
+			INode expression = nodeSequence.elementAt(1);
+			expression.accept(this);
+			INode expprime = nodeSequence.elementAt(2);
+			expprime.accept(this);
+
+		}
+		else {
+			expPrime.nodeChoice.accept(this);			
+		}
+		
+	}
+	
+	// Identifier --> Token
+	@Override
+	public void visit(Identifier identifier) {
+		identifier.nodeToken.accept(this);
+	}
+	
+	// IntegerLiteral 
+	public void visit(IntegerLiteral integerLiteral) {
+		integerLiteral.nodeToken.accept(this);
 	}
 	
 	// Tokens -> Identifiers, Integer_literals
@@ -159,4 +290,19 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	public void visit(NodeToken node) {
 		strBuffer.append(node.tokenImage);
 	}
+	
+	
+	private void newLine(int tabs) {
+		strBuffer.append("\n");
+		for (int i = tabs; i > 0; i--)
+			tab();
+	}
+
+	private void tab() {
+		strBuffer.append("	");
+	}
+
+	private void space() {
+		strBuffer.append(" ");
+}
 }
