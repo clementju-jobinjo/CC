@@ -36,7 +36,8 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		// MainClass
 		MainClass mainClass = goal.mainClass;
 		mainClass.accept(this);
-		
+		newLine(0);
+		newLine(0);
 		// ClassDeclaration
 		NodeListOptional nodeList = goal.nodeListOptional;
 		if (nodeList.present()) {
@@ -47,12 +48,17 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		}
 		
 		// EOF
+		if(nodeList.present()) {
+			newLine(0);
+			newLine(0);			
+		}
+		
 		NodeToken nodeToken = goal.nodeToken;
 		nodeToken.accept(this);
 		
 	}
 	
-	
+	// Mainclass
 	//"class" Identifier() "{" "public" "static" "void" "main" "(" "String" "[" "]" Identifier() ")" "{" ( Statement() )? "}" "}"
 	@Override
 	public void visit(MainClass mainClass) {
@@ -66,7 +72,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		identifier.accept(this);
 		space();
 		
-		// bracket
+		// {
 		NodeToken nodeToken1 = mainClass.nodeToken1;
 		nodeToken1.accept(this);
 		newLine(0);
@@ -107,10 +113,11 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		// ]
 		NodeToken nodeToken9 = mainClass.nodeToken9;
 		nodeToken9.accept(this);
+		space();
 		
 		// Identifier
-		Identifier identifer = mainClass.identifier;
-		identifier.accept(this);
+		Identifier identifier1 = mainClass.identifier1;
+		identifier1.accept(this);
 		
 		// )
 		NodeToken nodeToken10 = mainClass.nodeToken10;
@@ -120,19 +127,29 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		// {
 		NodeToken nodeToken11 = mainClass.nodeToken11;
 		nodeToken11.accept(this);
+		indent+=4;
+		newLine(indent);
 		
+		// (Statement())?
+		NodeOptional nodeOptional = mainClass.nodeOptional;
+			if (nodeOptional.present()) {
+				INode node = nodeOptional.node;
+				node.accept(this);
+		}
+		indent-=4;
+		newLine(indent);
 		
 		
 		// }
 		NodeToken nodeToken12 = mainClass.nodeToken12;
 		nodeToken12.accept(this);
 		
-		
-		
-		
-		
-		
-		
+		// }
+		indent-=4;
+		newLine(indent);
+		newLine(indent);
+		NodeToken nodeToken13 = mainClass.nodeToken13;
+		nodeToken13.accept(this);		
 	}
 	
 	// ClassDeclaration
