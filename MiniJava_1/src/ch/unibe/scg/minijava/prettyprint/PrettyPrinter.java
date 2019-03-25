@@ -52,6 +52,89 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		
 	}
 	
+	
+	//"class" Identifier() "{" "public" "static" "void" "main" "(" "String" "[" "]" Identifier() ")" "{" ( Statement() )? "}" "}"
+	@Override
+	public void visit(MainClass mainClass) {
+		// "class"
+		NodeToken nodeToken = mainClass.nodeToken;
+		nodeToken.accept(this);
+		space();
+		
+		// Identifier()
+		Identifier identifier = mainClass.identifier;
+		identifier.accept(this);
+		space();
+		
+		// bracket
+		NodeToken nodeToken1 = mainClass.nodeToken1;
+		nodeToken1.accept(this);
+		newLine(0);
+		indent+=4;
+		newLine(indent);
+		
+		// public
+		NodeToken nodeToken2 = mainClass.nodeToken2;
+		nodeToken2.accept(this);
+		space();
+		
+		// static
+		NodeToken nodeToken3 = mainClass.nodeToken3;
+		nodeToken3.accept(this);
+		space();
+		
+		// void
+		NodeToken nodeToken4 = mainClass.nodeToken4;
+		nodeToken4.accept(this);
+		space();
+		
+		// main
+		NodeToken nodeToken5 = mainClass.nodeToken5;
+		nodeToken5.accept(this);
+		
+		// (
+		NodeToken nodeToken6 = mainClass.nodeToken6;
+		nodeToken6.accept(this);
+		
+		// String
+		NodeToken nodeToken7 = mainClass.nodeToken7;
+		nodeToken7.accept(this);
+		
+		// [
+		NodeToken nodeToken8 = mainClass.nodeToken8;
+		nodeToken8.accept(this);
+		
+		// ]
+		NodeToken nodeToken9 = mainClass.nodeToken9;
+		nodeToken9.accept(this);
+		
+		// Identifier
+		Identifier identifer = mainClass.identifier;
+		identifier.accept(this);
+		
+		// )
+		NodeToken nodeToken10 = mainClass.nodeToken10;
+		nodeToken10.accept(this);
+		space();
+		 
+		// {
+		NodeToken nodeToken11 = mainClass.nodeToken11;
+		nodeToken11.accept(this);
+		
+		
+		
+		// }
+		NodeToken nodeToken12 = mainClass.nodeToken12;
+		nodeToken12.accept(this);
+		
+		
+		
+		
+		
+		
+		
+	}
+	
 	// ClassDeclaration
 	// "class" Identifier() ( "extends" Identifier() )? "{" ( VarDeclaration() )* ( MethodDeclaration() )* "}"
 	@Override
@@ -74,35 +157,55 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			// "extends"
 			INode nodeExtends = nodeSequence.elementAt(0);
 			nodeExtends.accept(this);
+			space();
 			
 			// Identifier
 			INode nodeIdentifier = nodeSequence.elementAt(1);
 			nodeIdentifier.accept(this);
+			space();
 		}
 		
 		// "{"
 		NodeToken nodeToken1 = classDeclaration.nodeToken1;
 		nodeToken1.accept(this);
-		newLine(indent);
-
+		//newLine(indent);
+		indent+=4;
+		//newLine(indent);
 		
 		//( VarDeclaration() )*
 		NodeListOptional nodeListOptional = classDeclaration.nodeListOptional;
 		if (nodeListOptional.present()) {
+			newLine(indent);
 			for (int i = 0; i < nodeListOptional.size(); i++) {
 				INode node = nodeListOptional.elementAt(i);
 				node.accept(this);
+				if(nodeListOptional.size()>1 && i<nodeListOptional.size()-1) {
+					newLine(indent);
+				}
+				
 			}
+			newLine(0);
+			newLine(indent);
 		}
-		space();
 		
 		// ( MethodDeclaration() )*
 		NodeListOptional nodeListOptional1 = classDeclaration.nodeListOptional1;
 		if (nodeListOptional1.present()) {
+			if (!nodeListOptional.present()) {
+				newLine(0);
+				newLine(indent);				
+			}
+			
 			for (int i = 0; i < nodeListOptional1.size(); i++) {
 				INode node = nodeListOptional1.elementAt(i);
 				node.accept(this);
+				newLine(0);
+				if(i!=nodeListOptional1.size()-1) {
+					newLine(indent);
+				}
+				
 			}
+			newLine(0);
 		}
 		
 		// "}"
@@ -186,22 +289,19 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			for (int i = 0; i < nodeListOptional.size(); i++) {
 				INode node = nodeListOptional.elementAt(i);
 				node.accept(this);
-				if(i==nodeListOptional.size()-1) {
-					indent=0;
+				if(i == nodeListOptional.size()-1) {
+					newLine(0);
 					newLine(indent);
 				}
 				else {
 					newLine(indent);					
-				}
-				
+				}						
 			}
 		}
 		
 		// (Statement() )*
 		NodeListOptional nodeListOptional2 = methodDeclaration.nodeListOptional1;
 		if (nodeListOptional2.present()) {
-			indent+=4;
-			newLine(indent);
 			for (int i = 0; i < nodeListOptional2.size(); i++) {
 				INode node = nodeListOptional2.elementAt(i);
 				node.accept(this);
@@ -218,7 +318,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		
 		// ;
 		methodDeclaration.nodeToken5.accept(this);
-		indent-=5;
+		indent-=4;
 		newLine(indent);
 
 		// }
@@ -256,8 +356,23 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			indent+=4;
 			newLine(indent);
 			// Statement
-			INode statement01 = nodeSequence.elementAt(1);
-			statement01.accept(this);
+			INode statement01 = nodeSequence.elementAt(1);			
+			NodeListOptional nodeListOptional2 = (NodeListOptional) statement01;
+			if (nodeListOptional2.present()) {
+				for (int i = 0; i < nodeListOptional2.size(); i++) {
+					INode node = nodeListOptional2.elementAt(i);
+					node.accept(this);
+					if(nodeListOptional2.size()>1 && i<nodeListOptional2.size()-1) {
+						newLine(indent);
+					}	
+				}
+			}
+			
+			
+			
+			
+			
+			//statement01.accept(this);
 			indent-=4;
 			newLine(indent);
 			// }
@@ -297,6 +412,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			// while
 			INode while21 = nodeSequence.elementAt(0);
 			while21.accept(this);
+			space();
 			// (
 			INode parenthesis21 = nodeSequence.elementAt(1);
 			parenthesis21.accept(this);
@@ -306,6 +422,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			// )
 			INode parenthesis22 = nodeSequence.elementAt(3);
 			parenthesis22.accept(this);
+			space();
 			// Statement()
 			INode statement21 = nodeSequence.elementAt(4);
 			statement21.accept(this);
@@ -368,9 +485,10 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	//	  | "false" ExpPrime()
 	@Override
 	public void visit(Expression expression) {
+		NodeSequence nodeSequence = (NodeSequence) expression.nodeChoice.choice;
 		switch(expression.nodeChoice.which) {
 			case 0:
-				NodeSequence nodeSequence = (NodeSequence) expression.nodeChoice.choice;
+				
 				// new
 				INode newWord = nodeSequence.elementAt(0);
 				newWord.accept(this);
@@ -391,6 +509,25 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 				INode expprime = nodeSequence.elementAt(5);
 				expprime.accept(this);
 				break;
+			// "new" Identifier() "(" ")" ExpPrime()
+			case 1: 
+				// "new
+				INode newWord11 = nodeSequence.elementAt(0);
+				newWord11.accept(this);
+				space();
+				// "Identifier
+				INode identifier11 = nodeSequence.elementAt(1);
+				identifier11.accept(this);
+				// (
+				INode parenthesis11 = nodeSequence.elementAt(2);
+				parenthesis11.accept(this);
+				// )
+				INode parenthesis12 = nodeSequence.elementAt(3);
+				parenthesis12.accept(this);
+				// "ExpPrime()
+				INode expprime11 = nodeSequence.elementAt(4);
+				expprime11.accept(this);
+				break;
 			default:
 				expression.nodeChoice.choice.accept(this);
 		}
@@ -407,27 +544,66 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	//	| Epsilon()
 	@Override
 	public void visit(ExpPrime expPrime) {
-		if(expPrime.nodeChoice.which==0) {
+		switch(expPrime.nodeChoice.which){
+			case 0:
+				NodeSequence nodeSequence0 = (NodeSequence) expPrime.nodeChoice.choice;
+				// ( "&&" | "<" | "+" | "-" | "*" | ">" )
+				space();
+				INode operator = nodeSequence0.elementAt(0);
+				operator.accept(this);
+				space();
+				// Expression()
+				INode expression = nodeSequence0.elementAt(1);
+				expression.accept(this);
+				
+				// ExpPrime()
+				INode expprime = nodeSequence0.elementAt(2);
+				expprime.accept(this);
+				break;
+			case 3:
+				NodeSequence nodeSequence3 = (NodeSequence) expPrime.nodeChoice.choice;
+				// .
+				INode dot31 = nodeSequence3.elementAt(0);
+				dot31.accept(this);
+				// identifier()
+				INode identifier31 = nodeSequence3.elementAt(1);
+				identifier31.accept(this);
+				// parenthesis
+				INode parenthesis31 = nodeSequence3.elementAt(2);
+				parenthesis31.accept(this);
+				// ( Expression() ( "," Expression() )* )?
+				NodeOptional nodeOptional31 = (NodeOptional)nodeSequence3.elementAt(3);
+				
+				if(nodeOptional31.present()) {
+					NodeSequence nodeSequence31 = (NodeSequence)nodeOptional31.node;
+					INode expression31 = nodeSequence31.elementAt(0);
+					expression31.accept(this);
+					
+					NodeListOptional expression32 = (NodeListOptional)nodeSequence31.elementAt(1);
+					if (expression32.present()) {
+						for (int i = 0; i < expression32.size(); i++) {
+							NodeSequence commaExpression = (NodeSequence) expression32.elementAt(i);
+							INode comma = commaExpression.elementAt(0);
+							comma.accept(this);
+							space();
+							INode expression33 = commaExpression.elementAt(1);
+							expression33.accept(this);
+							
+						}
+					}	
+				}
+				// )
+				INode parenthesis32 = nodeSequence3.elementAt(4);
+				parenthesis32.accept(this);
+				// ExpPrime()
+				INode expprime31 = nodeSequence3.elementAt(5);
+				expprime31.accept(this);
+				
+				break;
+			default:
+				expPrime.nodeChoice.accept(this);
 			
-			// ( "&&" | "<" | "+" | "-" | "*" | ">" )
-			NodeSequence nodeSequence = (NodeSequence) expPrime.nodeChoice.choice;
-			space();
-			INode operator = nodeSequence.elementAt(0);
-			operator.accept(this);
-			space();
-			// Expression()
-			INode expression = nodeSequence.elementAt(1);
-			expression.accept(this);
-			
-			// ExpPrime()
-			INode expprime = nodeSequence.elementAt(2);
-			expprime.accept(this);
-
-		}
-		else {
-			expPrime.nodeChoice.accept(this);			
-		}
-		
+		}		
 	}
 	
 	// Identifier --> Token
