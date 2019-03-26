@@ -6,7 +6,7 @@ import ch.unibe.scg.javacc.visitor.*;
 /**
  * Change at will!
  * 
- * @author kursjan
+ * @author Johan Jobin, Julien Clement
  *
  */
 public class PrettyPrinter extends DepthFirstVoidVisitor {
@@ -21,7 +21,6 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	}
 
 	public String prettyPrint(Object node) {
-		// TODO
 		INode n = (INode) node;
 		n.accept(this);
 		return strBuffer.toString();
@@ -185,9 +184,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		// "{"
 		NodeToken nodeToken1 = classDeclaration.nodeToken1;
 		nodeToken1.accept(this);
-		//newLine(indent);
 		indent+=4;
-		//newLine(indent);
 		
 		//( VarDeclaration() )*
 		NodeListOptional nodeListOptional = classDeclaration.nodeListOptional;
@@ -291,6 +288,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 				}
 			}
 		}
+		
 		// )
 		methodDeclaration.nodeToken2.accept(this);
 		space();
@@ -366,6 +364,8 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	public void visit(Statement statement) {
 		NodeSequence nodeSequence = (NodeSequence) statement.nodeChoice.choice;
 		switch(statement.nodeChoice.which){
+		
+		// "{" ( Statement() )* "}"
 		case 0:
 			// {
 			INode bracket01 = nodeSequence.elementAt(0);
@@ -385,18 +385,14 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 				}
 			}
 			
-			
-			
-			
-			
-			//statement01.accept(this);
 			indent-=4;
 			newLine(indent);
 			// }
 			INode bracket02 = nodeSequence.elementAt(2);
 			bracket02.accept(this);
 			break;
-			
+		
+		// "if" "(" Expression() ")" Statement() "else" Statement()
 		case 1:
 			// if
 			INode ifnode11 = nodeSequence.elementAt(0);
@@ -425,6 +421,9 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			statement12.accept(this);
 			
 			break;
+		
+
+		// "while" "(" Expression() ")" Statement()
 		case 2:
 			// while
 			INode while21 = nodeSequence.elementAt(0);
@@ -444,6 +443,9 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			INode statement21 = nodeSequence.elementAt(4);
 			statement21.accept(this);
 			break;
+		
+
+		// Identifier() "=" Expression() ";"
 		case 4:
 			//Identifier
 			INode identifier41 = nodeSequence.elementAt(0);
@@ -460,6 +462,9 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			INode semicolon41 = nodeSequence.elementAt(3);
 			semicolon41.accept(this);
 			break;
+		
+
+		// Identifier() "[" Expression() "]" "=" Expression() ";"
 		case 5:
 			// identifier
 			INode identifier = nodeSequence.elementAt(0);
@@ -485,6 +490,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			INode semicolon= nodeSequence.elementAt(6);
 			semicolon.accept(this);
 			break;
+			
 		default:
 			statement.nodeChoice.choice.accept(this);
 		}
@@ -504,8 +510,8 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	public void visit(Expression expression) {
 		NodeSequence nodeSequence = (NodeSequence) expression.nodeChoice.choice;
 		switch(expression.nodeChoice.which) {
-			case 0:
-				
+			//"new" "int" "[" Expression() "]" ExpPrime()
+			case 0:	
 				// new
 				INode newWord = nodeSequence.elementAt(0);
 				newWord.accept(this);
@@ -526,6 +532,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 				INode expprime = nodeSequence.elementAt(5);
 				expprime.accept(this);
 				break;
+				
 			// "new" Identifier() "(" ")" ExpPrime()
 			case 1: 
 				// "new
@@ -545,6 +552,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 				INode expprime11 = nodeSequence.elementAt(4);
 				expprime11.accept(this);
 				break;
+				
 			default:
 				expression.nodeChoice.choice.accept(this);
 		}
@@ -562,6 +570,8 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(ExpPrime expPrime) {
 		switch(expPrime.nodeChoice.which){
+			
+			// ( "&&" | "<" | "+" | "-" | "*" | ">" ) Expression() ExpPrime()
 			case 0:
 				NodeSequence nodeSequence0 = (NodeSequence) expPrime.nodeChoice.choice;
 				// ( "&&" | "<" | "+" | "-" | "*" | ">" )
@@ -577,6 +587,8 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 				INode expprime = nodeSequence0.elementAt(2);
 				expprime.accept(this);
 				break;
+			
+			// "." Identifier() "(" ( Expression() ( "," Expression() )* )? ")" ExpPrime()
 			case 3:
 				NodeSequence nodeSequence3 = (NodeSequence) expPrime.nodeChoice.choice;
 				// .
@@ -617,6 +629,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 				expprime31.accept(this);
 				
 				break;
+				
 			default:
 				expPrime.nodeChoice.accept(this);
 			
@@ -640,17 +653,14 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		strBuffer.append(node.tokenImage);
 	}
 	
-	
-	private void newLine(int tabs) {
+	// creates a new line whose indentation = tabs spaces
+	private void newLine(int spaces) {
 		strBuffer.append("\n");
-		for (int i = tabs; i > 0; i--)
-			tab();
+		for (int i = spaces; i > 0; i--)
+			space();
 	}
-
-	private void tab() {
-		strBuffer.append(" ");
-	}
-
+	
+	// adds a blank space to the string buffer
 	private void space() {
 		strBuffer.append(" ");
 }
