@@ -1,8 +1,22 @@
 /**
  * JavaCC template file created by SF JavaCC plugin 1.5.17+ wizard for JavaCC 1.5.0+
- */options{  JDK_VERSION = "1.8";  static = false; }PARSER_BEGIN(MiniJavaImpl)package ch.unibe.scg.javacc;
+ */
+options
+{
+  JDK_VERSION = "1.8";
 
-import ch.unibe.scg.minijava.MiniJava;public class MiniJavaImpl implements MiniJava{}PARSER_END(MiniJavaImpl)
+  static = false; 
+}
+
+PARSER_BEGIN(MiniJavaImpl)
+package ch.unibe.scg.javacc;
+
+import ch.unibe.scg.minijava.MiniJava;
+
+public class MiniJavaImpl implements MiniJava
+{}
+
+PARSER_END(MiniJavaImpl)
 
 // Placeholders so everything compiles. Remove/replace those.
 void Goal() :
@@ -10,65 +24,186 @@ void Goal() :
 {
   MainClass() ( ClassDeclaration() )* < EOF >
 }
+
 void ClassDeclaration() :
 { }
 {
   "class" Identifier() ( "extends" Identifier() )? "{" ( VarDeclaration() )* ( MethodDeclaration() )* "}"
 }
+
 void VarDeclaration() :
 { }
 {
   Type() Identifier() ";"
 }
+
 void MethodDeclaration() :
 { }
 {
-  "public" Type() Identifier() "(" (Type() Identifier() ("," Type() Identifier() )* )? ")" "{" ( LOOKAHEAD(2) VarDeclaration() )* (Statement() )* "return" Expression() ";" "}"
+  "public" Type() Identifier() < PARENTHESIS_LEFT > (Type() Identifier() (< COMMA > Type() Identifier() )* )? < PARENTHESIS_RIGHT > "{" ( LOOKAHEAD(2) VarDeclaration() )* (Statement() )* "return" Expression() ";" "}"
 }
+
 void Type() :
 { }
 {
-  LOOKAHEAD(2) "int" "[" "]"
+  LOOKAHEAD(2) "int" < BRACKET_LEFT > < BRACKET_RIGHT >
   | "int"
   | "boolean"
   | "void"
   | Identifier()
 }
+
 void Statement() :
 { }
 {
-  "{" ( Statement() )* "}"
-  | "if" "(" Expression() ")" Statement() "else" Statement()
-  | "while" "(" Expression() ")" Statement()
-  | "System.out.println" "(" Expression() ")" ";"
-  | LOOKAHEAD(2) Identifier() "=" Expression() ";"
-  | Identifier() "[" Expression() "]" "=" Expression() ";"
+  BlockStatement()
+  | IfStatement()
+  | WhileStatement()
+  | PrintStatement()
+  | AssignmentStatement()
 }
+
+void BlockStatement():
+{ }
+{
+  "{" ( Statement() )* "}"
+}
+
+void IfStatement():
+{ }
+{
+  "if" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > Statement() "else" Statement()
+}
+void WhileStatement():
+{ }
+{
+  "while" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > Statement()
+}
+
+void PrintStatement():
+{ }
+{
+  "System.out.println" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > ";"
+}
+
+void AssignmentStatement():
+{ }
+{
+  Assigned() "=" Expression() ";"
+}
+
+void Assigned():
+{ }
+{
+  LOOKAHEAD(2) ArrayAccessIdentifier()
+  | Identifier()
+}
+
+void ArrayAccessIdentifier():
+{ }
+{
+  Identifier() ArrayAccess()
+}
+
+void ArrayAccess():
+{ }
+{
+  < BRACKET_LEFT > Expression() < BRACKET_RIGHT >
+}
+
 void Expression():
 { }
 {
-  LOOKAHEAD(2) "new" "int" "[" Expression() "]" ExpPrime()
-  | "new" Identifier() "(" ")" ExpPrime()
+  NewExpression() ExpPrime()
   | Identifier() ExpPrime()
-  | "!" Expression() ExpPrime()
-  | "(" Expression() ")" ExpPrime()
-  | < INTEGER_LITERAL > ExpPrime()
+  | UnaryExpression() ExpPrime()
+  | ParenthesisExpression() ExpPrime()
+  | IntegerLiteral() ExpPrime()
   | "this" ExpPrime()
   | "true" ExpPrime()
   | "false" ExpPrime()
 }
+
+void NewExpression():
+{ }
+{
+  "new" ConstructionCall()
+}
+
+void ConstructionCall():
+{ }
+{
+  IntArrayConstructionCall()
+ | ObjectConstructionCall()
+}
+
+void IntArrayConstructionCall():
+{ }
+{
+  "int" < BRACKET_LEFT > Expression() < BRACKET_RIGHT >
+}
+
+void ObjectConstructionCall():
+{ }
+{
+  Identifier() < PARENTHESIS_LEFT > <PARENTHESIS_RIGHT >
+}
+
+void UnaryExpression():
+{ }
+{
+  UnaryOperator() Expression()
+}
+
+void ParenthesisExpression():
+{ }
+{
+  < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT >
+}
+
 void ExpPrime():
 { }
 {
-  ( "&&" | "<" | "+" | "-" | "*" | ">" ) Expression() ExpPrime()
-  | "[" Expression() "]" ExpPrime()
-  | LOOKAHEAD(2) "." "length" ExpPrime()
-  | "." Identifier() "(" ( Expression() ( "," Expression() )* )? ")" ExpPrime()
+  BinaryOperator() Expression() ExpPrime()
+  | ArrayCall() ExpPrime()
+  | LOOKAHEAD(2) DotArrayLength() ExpPrime()
+  | DotFunctionCall() ExpPrime()
   | Epsilon()
 }
-void Identifier() :
+
+void ArrayCall():
+{ }
+{
+  < BRACKET_LEFT > Expression() < BRACKET_RIGHT >
+}
+
+void DotArrayLength():
+{ }
+{
+  < DOT > "length"
+}
+
+void DotFunctionCall():
+{ }
+{
+  < DOT > Identifier() < PARENTHESIS_LEFT > ( Expression() ( < COMMA > Expression() )* )? < PARENTHESIS_RIGHT >
+}
+
+void Identifier():
 { }
 { < IDENTIFIER > }
+
+void UnaryOperator():
+{ }
+{
+  < UNOP >
+}
+
+void BinaryOperator():
+{ }
+{
+  < BINOP >
+}
 
 void IntegerLiteral():
 {}
@@ -76,7 +211,7 @@ void IntegerLiteral():
 
 void MainClass() :
 { }
-{ "class" Identifier() "{" "public" "static" "void" "main" "(" "String" "[" "]" Identifier() ")" "{" ( Statement() )? "}" "}" }
+{ "class" Identifier() "{" "public" "static" "void" "main" < PARENTHESIS_LEFT > "String" < BRACKET_LEFT > < BRACKET_RIGHT > Identifier() < PARENTHESIS_RIGHT > "{" ( Statement() )? "}" "}" }
 void Epsilon() :
 { }
 {
@@ -87,9 +222,48 @@ void Epsilon() :
 
 TOKEN : /* INTEGER_LITERAL */
 {
-  < INTEGER_LITERAL: ( ["1"-"9"] (["0"-"9"])* | "0" ) >}
+  < INTEGER_LITERAL: ( ["1"-"9"] (["0"-"9"])* | "0" ) >
+}
 
 TOKEN : /* IDENTIFIER */
-{  < IDENTIFIER: [ "a"-"z", "A"-"Z" ] ( [ "a"-"z", "A"-"Z" ] | [ "0"-"9" ] | "_" )* >
-}SKIP :{  " "| "\r"| "\t"| "\n"
-| <COMMENT: "//" (~["\n","\r"])* ("\n" | "\r" | "\r\n")>}
+{
+  < IDENTIFIER: [ "a"-"z", "A"-"Z" ] ( [ "a"-"z", "A"-"Z" ] | [ "0"-"9" ] | "_" )* >
+}
+
+TOKEN : /* PUNCTUATION */
+{
+  < DOT : "." >
+  | < COMMA : "," >
+}
+
+TOKEN : /* OPERATORS */
+{
+  < UNOP : "!" >
+  | < BINOP :
+    (
+      "&&"
+    | ">"
+    | "+"
+    | "-"
+    | "*"
+    | "<"
+    | "=="
+    ) >
+}
+
+TOKEN : /* PARENTHESIS */
+{
+  < PARENTHESIS_LEFT : "(" >
+  | < PARENTHESIS_RIGHT : ")" >
+  | < BRACKET_LEFT : "[" >
+  | < BRACKET_RIGHT : "]" >
+}
+
+SKIP :
+{
+  " "
+| "\r"
+| "\t"
+| "\n"
+| <COMMENT: "//" (~["\n","\r"])* ("\n" | "\r" | "\r\n")>
+}
