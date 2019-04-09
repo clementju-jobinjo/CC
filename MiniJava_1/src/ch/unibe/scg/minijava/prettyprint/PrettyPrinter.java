@@ -19,12 +19,14 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		this.strBuffer = new StringBuffer();
 		this.indent=0;
 	}
+	
 
 	public String prettyPrint(Object node) {
 		INode n = (INode) node;
 		n.accept(this);
 		return strBuffer.toString();
 	}
+	
 	
 	// Goal
 	// MainClass() ( ClassDeclaration() )* < EOF >
@@ -56,6 +58,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		nodeToken.accept(this);
 		
 	}
+	
 	
 	// Mainclass
 	//"class" Identifier() "{" "public" "static" "void" "main" "(" "String" "[" "]" Identifier() ")" "{" ( Statement() )? "}" "}"
@@ -151,6 +154,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		nodeToken13.accept(this);		
 	}
 	
+	
 	// ClassDeclaration
 	// "class" Identifier() ( "extends" Identifier() )? "{" ( VarDeclaration() )* ( MethodDeclaration() )* "}"
 	@Override
@@ -227,6 +231,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		nodeToken2.accept(this);
 	}
 	
+	
 	// VarDeclaration
 	// Type() Identifier() ";"
 	@Override
@@ -236,6 +241,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		varDeclaration.identifier.accept(this);
 		varDeclaration.nodeToken.accept(this);
 	}
+	
 	
 	// MethodDeclaration
 	// "public" Type() Identifier() "(" (Type() Identifier() ("," Type() Identifier() )* )? ")" 
@@ -340,6 +346,7 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		methodDeclaration.nodeToken6.accept(this);
 	}
 	
+	
 	// Type
 	// LOOKAHEAD(2) "int" "[" "]" | "int" | "boolean" | "void" | Identifier()
 	@Override
@@ -353,213 +360,225 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		
 	}
 	
-	// Statement
+	
 	// "{" ( Statement() )* "}"
-	//	  | "if" "(" Expression() ")" Statement() "else" Statement()
-	//	  | "while" "(" Expression() ")" Statement()
-	//	  | "System.out.println" "(" Expression() ")" ";"
-	//	  | LOOKAHEAD(2) Identifier() "=" Expression() ";"
-	//	  | Identifier() "[" Expression() "]" "=" Expression() ";"
 	@Override
-	public void visit(Statement statement) {
-		NodeSequence nodeSequence = (NodeSequence) statement.nodeChoice.choice;
-		switch(statement.nodeChoice.which){
+	public void visit(BlockStatement blockStatement) {
 		
-		// "{" ( Statement() )* "}"
-		case 0:
-			// {
-			INode bracket01 = nodeSequence.elementAt(0);
-			bracket01.accept(this);
-			indent+=4;
-			newLine(indent);
-			// Statement
-			INode statement01 = nodeSequence.elementAt(1);			
-			NodeListOptional nodeListOptional2 = (NodeListOptional) statement01;
-			if (nodeListOptional2.present()) {
-				for (int i = 0; i < nodeListOptional2.size(); i++) {
-					INode node = nodeListOptional2.elementAt(i);
-					node.accept(this);
-					if(nodeListOptional2.size()>1 && i<nodeListOptional2.size()-1) {
-						newLine(indent);
-					}	
-				}
+		// "{"
+		blockStatement.nodeToken.accept(this);
+		indent+=4;
+		newLine(indent);
+		
+		// Statement
+		if (blockStatement.nodeListOptional.present()) {
+			for (int i = 0; i < blockStatement.nodeListOptional.size(); ++i) {
+				blockStatement.nodeListOptional.elementAt(i).accept(this);
+				if(blockStatement.nodeListOptional.size()>1 && i<blockStatement.nodeListOptional.size()-1) {
+					newLine(indent);
+				}	
 			}
-			
 			indent-=4;
 			newLine(indent);
-			// }
-			INode bracket02 = nodeSequence.elementAt(2);
-			bracket02.accept(this);
-			break;
-		
-		// "if" "(" Expression() ")" Statement() "else" Statement()
-		case 1:
-			// if
-			INode ifnode11 = nodeSequence.elementAt(0);
-			ifnode11.accept(this);
-			space();
-			// (
-			INode  parenthesis11 = nodeSequence.elementAt(1);
-			parenthesis11.accept(this);
-			//Expression
-			INode expression11 = nodeSequence.elementAt(2);
-			expression11.accept(this);
-			// )
-			INode parenthesis12 = nodeSequence.elementAt(3);
-			parenthesis12.accept(this);
-			space();
-			// Statement()
-			INode statement11 = nodeSequence.elementAt(4);
-			statement11.accept(this);
-			// else
-			space();
-			INode else11 = nodeSequence.elementAt(5);
-			else11.accept(this);
-			space();
-			// Statement()
-			INode statement12 = nodeSequence.elementAt(6);
-			statement12.accept(this);
-			
-			break;
-		
-
-		// "while" "(" Expression() ")" Statement()
-		case 2:
-			// while
-			INode while21 = nodeSequence.elementAt(0);
-			while21.accept(this);
-			space();
-			// (
-			INode parenthesis21 = nodeSequence.elementAt(1);
-			parenthesis21.accept(this);
-			//Expression
-			INode expression21 = nodeSequence.elementAt(2);
-			expression21.accept(this);
-			// )
-			INode parenthesis22 = nodeSequence.elementAt(3);
-			parenthesis22.accept(this);
-			space();
-			// Statement()
-			INode statement21 = nodeSequence.elementAt(4);
-			statement21.accept(this);
-			break;
-		
-
-		// Identifier() "=" Expression() ";"
-		case 4:
-			//Identifier
-			INode identifier41 = nodeSequence.elementAt(0);
-			identifier41.accept(this);
-			space();
-			// =
-			INode equals41 = nodeSequence.elementAt(1);
-			equals41.accept(this);
-			space();
-			// Expression
-			INode expression41 = nodeSequence.elementAt(2);
-			expression41.accept(this);
-			// ;
-			INode semicolon41 = nodeSequence.elementAt(3);
-			semicolon41.accept(this);
-			break;
-		
-
-		// Identifier() "[" Expression() "]" "=" Expression() ";"
-		case 5:
-			// identifier
-			INode identifier = nodeSequence.elementAt(0);
-			identifier.accept(this);
-			// [
-			INode bracket = nodeSequence.elementAt(1);
-			bracket.accept(this);
-			// expression
-			INode expression52 = nodeSequence.elementAt(2);
-			expression52.accept(this);
-			// ]
-			INode bracket52 = nodeSequence.elementAt(3);
-			bracket52.accept(this);
-			space();
-			// =
-			INode equals = nodeSequence.elementAt(4);
-			equals.accept(this);
-			space();
-			// Expression
-			INode expression53 = nodeSequence.elementAt(5);
-			expression53.accept(this);
-			// ;
-			INode semicolon= nodeSequence.elementAt(6);
-			semicolon.accept(this);
-			break;
-			
-		default:
-			statement.nodeChoice.choice.accept(this);
 		}
+		// "}"
+		blockStatement.nodeToken1.accept(this);
 	}
 	
-	// Expression
-	// LOOKAHEAD(2) "new" "int" "[" Expression() "]" ExpPrime()
-	//	  | "new" Identifier() "(" ")" ExpPrime()
-	//	  | Identifier() ExpPrime()
-	//	  | "!" Expression() ExpPrime()
-	//	  | "(" Expression() ")" ExpPrime()
-	//	  | < INTEGER_LITERAL > ExpPrime()
-	//	  | "this" ExpPrime()
-	//	  | "true" ExpPrime()
-	//	  | "false" ExpPrime()
+	
+	// "if" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > Statement() "else" Statement()
 	@Override
-	public void visit(Expression expression) {
-		NodeSequence nodeSequence = (NodeSequence) expression.nodeChoice.choice;
-		switch(expression.nodeChoice.which) {
-			//"new" "int" "[" Expression() "]" ExpPrime()
-			case 0:	
-				// new
-				INode newWord = nodeSequence.elementAt(0);
-				newWord.accept(this);
-				space();
-				// int
-				INode integer = nodeSequence.elementAt(1);
-				integer.accept(this);
-				// [
-				INode bracket = nodeSequence.elementAt(2);
-				bracket.accept(this);
-				// expression
-				INode expression2 = nodeSequence.elementAt(3);
-				expression2.accept(this);
-				// ]
-				INode bracket2 = nodeSequence.elementAt(4);
-				bracket2.accept(this);
-				// ExpPrime
-				INode expprime = nodeSequence.elementAt(5);
-				expprime.accept(this);
-				break;
-				
-			// "new" Identifier() "(" ")" ExpPrime()
-			case 1: 
-				// "new
-				INode newWord11 = nodeSequence.elementAt(0);
-				newWord11.accept(this);
-				space();
-				// "Identifier
-				INode identifier11 = nodeSequence.elementAt(1);
-				identifier11.accept(this);
-				// (
-				INode parenthesis11 = nodeSequence.elementAt(2);
-				parenthesis11.accept(this);
-				// )
-				INode parenthesis12 = nodeSequence.elementAt(3);
-				parenthesis12.accept(this);
-				// "ExpPrime()
-				INode expprime11 = nodeSequence.elementAt(4);
-				expprime11.accept(this);
-				break;
-				
-			default:
-				expression.nodeChoice.choice.accept(this);
-		}
+	public void visit(IfStatement ifStatement) {
+		// "if" 
+		ifStatement.nodeToken.accept(this);
+		space();
+		
+		// < PARENTHESIS_LEFT >
+		ifStatement.nodeToken1.accept(this);
 		
 		
+		// Expression()
+		ifStatement.expression.accept(this);
 		
+		
+		// < PARENTHESIS_RIGHT >
+		ifStatement.nodeToken2.accept(this);
+		space();
+		
+		// Statement()
+		ifStatement.statement.accept(this);
+		space();
+		
+		// "else"
+		ifStatement.nodeToken3.accept(this);
+		space();
+		
+		// Statement()
+		ifStatement.statement1.accept(this);
 	}
+	
+	
+	// "while" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > Statement()
+	@Override
+	public void visit(WhileStatement whileStatement) {
+		// "while"
+		whileStatement.nodeToken.accept(this);
+		space();
+		
+		// < PARENTHESIS_LEFT > 
+		whileStatement.nodeToken1.accept(this);
+		
+		// Expression()
+		whileStatement.expression.accept(this);
+		
+		// < PARENTHESIS_RIGHT >
+		whileStatement.nodeToken2.accept(this);
+		space();
+		
+		// Statement()
+		whileStatement.statement.accept(this);
+	}
+	
+	
+	// "System.out.println" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > ";"
+	@Override
+	public void visit(PrintStatement printStatement) {
+		// "System.out.println"
+		printStatement.nodeToken.accept(this);
+		
+		// < PARENTHESIS_LEFT > 
+		printStatement.nodeToken1.accept(this);
+		
+		// Expression()
+		printStatement.expression.accept(this);
+		
+		// < PARENTHESIS_RIGHT >
+		printStatement.nodeToken2.accept(this);
+		
+		// ";"
+		printStatement.nodeToken3.accept(this);
+	}
+	
+	
+	// Assigned() "=" Expression() ";"
+	@Override
+	public void visit(AssignmentStatement assignmentStatement) {
+		// Assigned()
+		assignmentStatement.assigned.accept(this);
+		space();
+		
+		// "=" 
+		assignmentStatement.nodeToken.accept(this);
+		space();
+		
+		// Expression()
+		assignmentStatement.expression.accept(this);
+		
+		// ";"
+		assignmentStatement.nodeToken1.accept(this);
+	}
+	
+	
+	@Override
+	public void visit(ArrayAccessIdentifier arrayAccessIdentifier) {
+		// Identifier()
+		arrayAccessIdentifier.identifier.accept(this);
+		
+		// ArrayAccess()
+		arrayAccessIdentifier.arrayAccess.accept(this);
+	}
+	
+	
+	// < BRACKET_LEFT > Expression() < BRACKET_RIGHT >
+	@Override
+	public void visit(ArrayAccess arrayAccess) {
+		// < BRACKET_LEFT >
+		arrayAccess.nodeToken.accept(this);
+		
+		// Expression()
+		arrayAccess.expression.accept(this);
+		
+		// < BRACKET_RIGHT >
+		arrayAccess.nodeToken1.accept(this);
+	}
+	
+	
+	// "new" ConstructionCall()
+	@Override
+	public void visit(NewExpression newExpression) {
+		// "new"
+		newExpression.nodeToken.accept(this);
+		space();
+		
+		// ConstructionCall()
+		newExpression.constructionCall.accept(this);
+	}
+	
+	
+	// "int" < BRACKET_LEFT > Expression() < BRACKET_RIGHT >
+	@Override
+	public void visit(IntArrayConstructionCall constructionCall) {
+		// "int"
+		constructionCall.nodeToken.accept(this);
+		
+		// < BRACKET_LEFT >
+		constructionCall.nodeToken1.accept(this);
+		
+		// Expression()
+		constructionCall.expression.accept(this);
+		
+		// < BRACKET_RIGHT >
+		constructionCall.nodeToken2.accept(this);
+	}
+	
+	
+	// Identifier() < PARENTHESIS_LEFT > <PARENTHESIS_RIGHT >
+	@Override
+	public void visit(ObjectConstructionCall constructionCall) {
+		// Identifier()
+		constructionCall.identifier.accept(this);
+		
+		// < PARENTHESIS_LEFT >
+		constructionCall.nodeToken.accept(this);
+		
+		// <PARENTHESIS_RIGHT >
+		constructionCall.nodeToken1.accept(this);
+	}
+	
+	
+	// UnaryOperator() Expression()
+	@Override
+	public void visit(UnaryExpression unaryExp) {
+		// UnaryOperator()
+		unaryExp.unaryOperator.accept(this);
+		
+		// Expression()
+		unaryExp.expression.accept(this);
+	}
+	
+	// < UNOP >
+	@Override
+	public void visit(UnaryOperator unOp) {
+		unOp.nodeToken.accept(this);
+	}
+	
+	
+	// < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT >
+	@Override
+	public void visit(ParenthesisExpression parExp) {
+		// < PARENTHESIS_LEFT >
+		parExp.nodeToken.accept(this);
+		
+		// Expression()
+		parExp.expression.accept(this);
+		
+		// < PARENTHESIS_RIGHT >
+		parExp.nodeToken1.accept(this);
+	}
+	
+		
+		
+//	}
 	
 	// ExpPrime
 	//( "&&" | "<" | "+" | "-" | "*" | ">" ) Expression() ExpPrime()
@@ -567,73 +586,145 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	//	| LOOKAHEAD(2) "." "length" ExpPrime()
 	//	| "." Identifier() "(" ( Expression() ( "," Expression() )* )? ")" ExpPrime()
 	//	| Epsilon()
+//	@Override
+//	public void visit(ExpPrime expPrime) {
+//		switch(expPrime.nodeChoice.which){
+//			
+//			// ( "&&" | "<" | "+" | "-" | "*" | ">" ) Expression() ExpPrime()
+//			case 0:
+//				NodeSequence nodeSequence0 = (NodeSequence) expPrime.nodeChoice.choice;
+//				// ( "&&" | "<" | "+" | "-" | "*" | ">" )
+//				space();
+//				INode operator = nodeSequence0.elementAt(0);
+//				operator.accept(this);
+//				space();
+//				// Expression()
+//				INode expression = nodeSequence0.elementAt(1);
+//				expression.accept(this);
+//				
+//				// ExpPrime()
+//				INode expprime = nodeSequence0.elementAt(2);
+//				expprime.accept(this);
+//				break;
+//			
+//			// "." Identifier() "(" ( Expression() ( "," Expression() )* )? ")" ExpPrime()
+//			case 3:
+//				NodeSequence nodeSequence3 = (NodeSequence) expPrime.nodeChoice.choice;
+//				// .
+//				INode dot31 = nodeSequence3.elementAt(0);
+//				dot31.accept(this);
+//				// identifier()
+//				INode identifier31 = nodeSequence3.elementAt(1);
+//				identifier31.accept(this);
+//				// parenthesis
+//				INode parenthesis31 = nodeSequence3.elementAt(2);
+//				parenthesis31.accept(this);
+//				// ( Expression() ( "," Expression() )* )?
+//				NodeOptional nodeOptional31 = (NodeOptional)nodeSequence3.elementAt(3);
+//				
+//				if(nodeOptional31.present()) {
+//					NodeSequence nodeSequence31 = (NodeSequence)nodeOptional31.node;
+//					INode expression31 = nodeSequence31.elementAt(0);
+//					expression31.accept(this);
+//					
+//					NodeListOptional expression32 = (NodeListOptional)nodeSequence31.elementAt(1);
+//					if (expression32.present()) {
+//						for (int i = 0; i < expression32.size(); i++) {
+//							NodeSequence commaExpression = (NodeSequence) expression32.elementAt(i);
+//							INode comma = commaExpression.elementAt(0);
+//							comma.accept(this);
+//							space();
+//							INode expression33 = commaExpression.elementAt(1);
+//							expression33.accept(this);
+//							
+//						}
+//					}	
+//				}
+//				// )
+//				INode parenthesis32 = nodeSequence3.elementAt(4);
+//				parenthesis32.accept(this);
+//				// ExpPrime()
+//				INode expprime31 = nodeSequence3.elementAt(5);
+//				expprime31.accept(this);
+//				
+//				break;
+//				
+//			default:
+//				expPrime.nodeChoice.accept(this);
+//			
+//		}		
+//	}
+	
+
 	@Override
-	public void visit(ExpPrime expPrime) {
-		switch(expPrime.nodeChoice.which){
-			
-			// ( "&&" | "<" | "+" | "-" | "*" | ">" ) Expression() ExpPrime()
-			case 0:
-				NodeSequence nodeSequence0 = (NodeSequence) expPrime.nodeChoice.choice;
-				// ( "&&" | "<" | "+" | "-" | "*" | ">" )
-				space();
-				INode operator = nodeSequence0.elementAt(0);
-				operator.accept(this);
-				space();
-				// Expression()
-				INode expression = nodeSequence0.elementAt(1);
-				expression.accept(this);
-				
-				// ExpPrime()
-				INode expprime = nodeSequence0.elementAt(2);
-				expprime.accept(this);
-				break;
-			
-			// "." Identifier() "(" ( Expression() ( "," Expression() )* )? ")" ExpPrime()
-			case 3:
-				NodeSequence nodeSequence3 = (NodeSequence) expPrime.nodeChoice.choice;
-				// .
-				INode dot31 = nodeSequence3.elementAt(0);
-				dot31.accept(this);
-				// identifier()
-				INode identifier31 = nodeSequence3.elementAt(1);
-				identifier31.accept(this);
-				// parenthesis
-				INode parenthesis31 = nodeSequence3.elementAt(2);
-				parenthesis31.accept(this);
-				// ( Expression() ( "," Expression() )* )?
-				NodeOptional nodeOptional31 = (NodeOptional)nodeSequence3.elementAt(3);
-				
-				if(nodeOptional31.present()) {
-					NodeSequence nodeSequence31 = (NodeSequence)nodeOptional31.node;
-					INode expression31 = nodeSequence31.elementAt(0);
-					expression31.accept(this);
-					
-					NodeListOptional expression32 = (NodeListOptional)nodeSequence31.elementAt(1);
-					if (expression32.present()) {
-						for (int i = 0; i < expression32.size(); i++) {
-							NodeSequence commaExpression = (NodeSequence) expression32.elementAt(i);
-							INode comma = commaExpression.elementAt(0);
-							comma.accept(this);
-							space();
-							INode expression33 = commaExpression.elementAt(1);
-							expression33.accept(this);
-							
-						}
-					}	
+	public void visit(BinaryOperator binOp) {
+		space();
+		binOp.nodeToken.accept(this);
+		space();
+	}
+	
+	// < BRACKET_LEFT > Expression() < BRACKET_RIGHT >
+	@Override
+	public void visit(ArrayCall arrayCall) {
+		// < BRACKET_LEFT >
+		arrayCall.nodeToken.accept(this);
+		
+		// Expression()
+		arrayCall.expression.accept(this);
+		
+		// < BRACKET_RIGHT >
+		arrayCall.nodeToken1.accept(this);
+	}
+	
+	
+	// < DOT > "length"
+	@Override
+	public void visit(DotArrayLength dotArray) {
+		// < DOT >
+		dotArray.nodeToken.accept(this);
+		
+		// "length"
+		dotArray.nodeToken1.accept(this);
+	}
+	
+	// < DOT > Identifier() < PARENTHESIS_LEFT > ( Expression() ( < COMMA > Expression() )* )? < PARENTHESIS_RIGHT >
+	@Override
+	public void visit(DotFunctionCall dotFct) {
+		// < DOT >
+		dotFct.nodeToken.accept(this);
+		
+		
+		// Identifier()
+		dotFct.identifier.accept(this);
+		
+		
+		// < PARENTHESIS_LEFT >
+		dotFct.nodeToken1.accept(this);
+		
+		
+		// ( Expression() ( < COMMA > Expression() )* )?
+		if(dotFct.nodeOptional.present()) {
+			NodeSequence nodeSequence = (NodeSequence)dotFct.nodeOptional.node;
+			INode exp = nodeSequence.elementAt(0);
+			exp.accept(this);
+
+			NodeListOptional exp2 = (NodeListOptional)nodeSequence.elementAt(1);
+			if (exp2.present()) {
+				for (int i = 0; i < exp2.size(); i++) {
+					NodeSequence commaExpression = (NodeSequence) exp2.elementAt(i);
+					INode comma = commaExpression.elementAt(0);
+					comma.accept(this);
+					space();
+					INode expression33 = commaExpression.elementAt(1);
+					expression33.accept(this);
+
 				}
-				// )
-				INode parenthesis32 = nodeSequence3.elementAt(4);
-				parenthesis32.accept(this);
-				// ExpPrime()
-				INode expprime31 = nodeSequence3.elementAt(5);
-				expprime31.accept(this);
-				
-				break;
-				
-			default:
-				expPrime.nodeChoice.accept(this);
-			
-		}		
+			}	
+		}
+		
+		
+		// < PARENTHESIS_RIGHT >
+		dotFct.nodeToken2.accept(this);
 	}
 	
 	// Identifier --> Token
