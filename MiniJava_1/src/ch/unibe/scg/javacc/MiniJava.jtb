@@ -46,11 +46,17 @@ void MethodDeclaration() :
 void Type() :
 { }
 {
-  LOOKAHEAD(2) "int" < BRACKET_LEFT > < BRACKET_RIGHT >
+  LOOKAHEAD(2) IntArrayDeclaration()
   | "int"
-  | "boolean"
+  | BooleanType()
   | "void"
   | Identifier()
+}
+
+void IntArrayDeclaration():
+{ }
+{
+  "int" < BRACKET_LEFT > < BRACKET_RIGHT >
 }
 
 void Statement() :
@@ -203,6 +209,12 @@ void BinaryOperator():
 { }
 {
   < BINOP >
+}
+
+void BooleanType():
+{ }
+{
+  "boolean"
 }
 
 void IntegerLiteral():

@@ -347,17 +347,17 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	}
 	
 	
-	// Type
-	// LOOKAHEAD(2) "int" "[" "]" | "int" | "boolean" | "void" | Identifier()
+	// "int" < BRACKET_LEFT > < BRACKET_RIGHT >
 	@Override
-	public void visit(Type type) {
-		if(type.nodeChoice.which==2) {
-			strBuffer.append("bool");
-		}
-		else {
-			type.nodeChoice.choice.accept(this);
-		}
+	public void visit(IntArrayDeclaration intArr) {
+		// "int"
+		intArr.nodeToken.accept(this);
 		
+		// < BRACKET_LEFT >
+		intArr.nodeToken1.accept(this);
+		
+		// < BRACKET_RIGHT >
+		intArr.nodeToken2.accept(this);
 	}
 	
 	
@@ -576,85 +576,6 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		parExp.nodeToken1.accept(this);
 	}
 	
-		
-		
-//	}
-	
-	// ExpPrime
-	//( "&&" | "<" | "+" | "-" | "*" | ">" ) Expression() ExpPrime()
-	//	| "[" Expression() "]" ExpPrime()
-	//	| LOOKAHEAD(2) "." "length" ExpPrime()
-	//	| "." Identifier() "(" ( Expression() ( "," Expression() )* )? ")" ExpPrime()
-	//	| Epsilon()
-//	@Override
-//	public void visit(ExpPrime expPrime) {
-//		switch(expPrime.nodeChoice.which){
-//			
-//			// ( "&&" | "<" | "+" | "-" | "*" | ">" ) Expression() ExpPrime()
-//			case 0:
-//				NodeSequence nodeSequence0 = (NodeSequence) expPrime.nodeChoice.choice;
-//				// ( "&&" | "<" | "+" | "-" | "*" | ">" )
-//				space();
-//				INode operator = nodeSequence0.elementAt(0);
-//				operator.accept(this);
-//				space();
-//				// Expression()
-//				INode expression = nodeSequence0.elementAt(1);
-//				expression.accept(this);
-//				
-//				// ExpPrime()
-//				INode expprime = nodeSequence0.elementAt(2);
-//				expprime.accept(this);
-//				break;
-//			
-//			// "." Identifier() "(" ( Expression() ( "," Expression() )* )? ")" ExpPrime()
-//			case 3:
-//				NodeSequence nodeSequence3 = (NodeSequence) expPrime.nodeChoice.choice;
-//				// .
-//				INode dot31 = nodeSequence3.elementAt(0);
-//				dot31.accept(this);
-//				// identifier()
-//				INode identifier31 = nodeSequence3.elementAt(1);
-//				identifier31.accept(this);
-//				// parenthesis
-//				INode parenthesis31 = nodeSequence3.elementAt(2);
-//				parenthesis31.accept(this);
-//				// ( Expression() ( "," Expression() )* )?
-//				NodeOptional nodeOptional31 = (NodeOptional)nodeSequence3.elementAt(3);
-//				
-//				if(nodeOptional31.present()) {
-//					NodeSequence nodeSequence31 = (NodeSequence)nodeOptional31.node;
-//					INode expression31 = nodeSequence31.elementAt(0);
-//					expression31.accept(this);
-//					
-//					NodeListOptional expression32 = (NodeListOptional)nodeSequence31.elementAt(1);
-//					if (expression32.present()) {
-//						for (int i = 0; i < expression32.size(); i++) {
-//							NodeSequence commaExpression = (NodeSequence) expression32.elementAt(i);
-//							INode comma = commaExpression.elementAt(0);
-//							comma.accept(this);
-//							space();
-//							INode expression33 = commaExpression.elementAt(1);
-//							expression33.accept(this);
-//							
-//						}
-//					}	
-//				}
-//				// )
-//				INode parenthesis32 = nodeSequence3.elementAt(4);
-//				parenthesis32.accept(this);
-//				// ExpPrime()
-//				INode expprime31 = nodeSequence3.elementAt(5);
-//				expprime31.accept(this);
-//				
-//				break;
-//				
-//			default:
-//				expPrime.nodeChoice.accept(this);
-//			
-//		}		
-//	}
-	
 
 	@Override
 	public void visit(BinaryOperator binOp) {
@@ -727,22 +648,33 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 		dotFct.nodeToken2.accept(this);
 	}
 	
+	
+	// Boolean
+	@Override
+	public void visit(BooleanType booleanType) {
+		strBuffer.append("bool");
+	}
+	
+	
 	// Identifier --> Token
 	@Override
 	public void visit(Identifier identifier) {
 		identifier.nodeToken.accept(this);
 	}
 	
+	
 	// IntegerLiteral 
 	public void visit(IntegerLiteral integerLiteral) {
 		integerLiteral.nodeToken.accept(this);
 	}
+	
 	
 	// Tokens -> Identifiers, Integer_literals
 	@Override
 	public void visit(NodeToken node) {
 		strBuffer.append(node.tokenImage);
 	}
+	
 	
 	// creates a new line whose indentation = tabs spaces
 	private void newLine(int spaces) {
@@ -751,8 +683,9 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 			space();
 	}
 	
+	
 	// adds a blank space to the string buffer
 	private void space() {
 		strBuffer.append(" ");
-}
+	}
 }
