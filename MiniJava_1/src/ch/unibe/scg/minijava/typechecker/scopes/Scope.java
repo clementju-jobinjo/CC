@@ -38,7 +38,7 @@ public class Scope {
 		this.scopeEnglobant = sc;
 	}
 	
-	public void setClasses(Type cl) throws Exception {
+	public void addClass(Type cl) throws Exception {
 		for (Type cla : classes) {
 			if (cla.getTypeName().equals(cl.getTypeName())) {
 				throw new Exception();
@@ -48,7 +48,7 @@ public class Scope {
 		classes.add(cl);
 	}
 	
-	public void setMethods(Method met) throws Exception {
+	public void addMethod(Method met) throws Exception {
 		
 		String metIdentifier = met.getIdentifier();
 		List<Variable> metArguments = met.getArguments();
@@ -80,7 +80,7 @@ public class Scope {
 		
 	}
 	
-	public void setVariables(Variable var) throws Exception {
+	public void addVariable(Variable var) throws Exception {
 		for (Variable variable : variables) {
 			if (variable.getIdentifier().equals(var.getIdentifier())) {
 				throw new Exception();
