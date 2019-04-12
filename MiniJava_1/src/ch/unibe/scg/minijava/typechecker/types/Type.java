@@ -11,7 +11,7 @@ public class Type {
 	}
 	
 	public String getTypeName() {
-		return name;
+		return (name == null) ? "null" : name;
 	}
 	
 	public Type getParentType() {

@@ -47,9 +47,9 @@ void Type() :
 { }
 {
   LOOKAHEAD(2) IntArrayDeclaration()
-  | "int"
+  | IntType()
   | BooleanType()
-  | "void"
+  | VoidType()
   | Identifier()
 }
 
@@ -57,6 +57,18 @@ void IntArrayDeclaration():
 { }
 {
   "int" < BRACKET_LEFT > < BRACKET_RIGHT >
+}
+
+void IntType():
+{ }
+{
+  "int"
+}
+
+void VoidType():
+{ }
+{
+  "void"
 }
 
 void Statement() :

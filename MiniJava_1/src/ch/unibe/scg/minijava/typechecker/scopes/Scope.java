@@ -2,20 +2,26 @@ package ch.unibe.scg.minijava.typechecker.scopes;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import ch.unibe.scg.minijava.typechecker.types.Method;
+import ch.unibe.scg.minijava.typechecker.types.Variable;
+import ch.unibe.scg.javacc.syntaxtree.INode;
 import ch.unibe.scg.minijava.typechecker.types.*;
 
 public class Scope {
 	
-	Scope scopeEnglobant;
-	List<Type> classes;
-	List<Method> methods;
-	List<Variable> variables;
+	private Scope scopeEnglobant;
+	private List<Type> classes;
+	private List<Method> methods;
+	private List<Variable> variables;
+	private INode scopeRelatedTo;
 	
-	public Scope(Scope scopeEnglobant) {
+	public Scope(Scope scopeEnglobant, INode scopeRelatedTo) {
 		this.scopeEnglobant = scopeEnglobant;
 		classes = new ArrayList<Type>();
 		methods = new ArrayList<Method>();
 		variables =  new ArrayList<Variable>();
+		this.scopeRelatedTo = scopeRelatedTo;
 	}
 	
 	public Scope getScopeEnglobant() {
@@ -34,21 +40,25 @@ public class Scope {
 		return variables;
 	}
 	
+	public INode getScopeRelatedTo() {
+		return scopeRelatedTo;
+	}
+	
 	public void setScopeEnglobant(Scope sc) {
 		this.scopeEnglobant = sc;
 	}
 	
-	public void addClass(Type cl) throws Exception {
+	public void addClass(Type cl) {
 		for (Type cla : classes) {
 			if (cla.getTypeName().equals(cl.getTypeName())) {
-				throw new Exception();
+				throw new RuntimeException();
 			}
 		}
 		
 		classes.add(cl);
 	}
 	
-	public void addMethod(Method met) throws Exception {
+	public void addMethod(Method met) {
 		
 		String metIdentifier = met.getIdentifier();
 		List<Variable> metArguments = met.getArguments();
@@ -69,25 +79,72 @@ public class Scope {
 			
 			// exact same definition same parameters, different return types
 			if (sameArguments && metIdentifier.equals(mIdentifier)) {
-				throw new Exception();
+				throw new RuntimeException();
 			}
-		
-			methods.add(met);
 			
 		}
+		methods.add(met);
 		
 		
 		
 	}
 	
-	public void addVariable(Variable var) throws Exception {
-		for (Variable variable : variables) {
-			if (variable.getIdentifier().equals(var.getIdentifier())) {
-				throw new Exception();
+	public void addVariable(Variable var) {
+		int index = -1;
+//		for (Variable variable : variables) {
+//			if (variable.getIdentifier().equals(var.getIdentifier())) {
+//				//throw new RuntimeException();
+//				contains = variable.;
+//				break;
+//			}
+//		}
+		for (int i = 0; i < variables.size(); i++) {
+			if (variables.get(i).getIdentifier().equals(var.getIdentifier())) {
+				//throw new RuntimeException();
+				index = i;
+				break;
 			}
 		}
 		
-		variables.add(var);
+		if (index == -1) {
+			variables.add(var);
+		}
+		else {
+			variables.remove(index);
+			variables.add(var);
+		}
+		
+	}
+	
+	@Override
+	public String toString() {
+		List<Variable> vars = this.getVariables();
+		List<Method> mets = this.getMethods();
+		List<Type> clas = this.getClasses();
+		
+		String str = "";
+		
+		str += "#########\nClasses\n";
+		
+		for (Type cla : clas) {
+			str += "> " + cla.getTypeName() + "\n"; 
+		}
+		
+		str += "\nMethods\n"; 
+		for (Method met : mets) {
+			str += "> " + met.getIdentifier() + "\n";
+			
+			for (Variable arg : met.getArguments()) {
+				str += ">> " + arg.getType().getTypeName() + " " + arg.getIdentifier() + "\n";
+			}
+		}
+		
+		str += "\nVariables\n"; 
+		for (Variable var : vars) {
+			str += "> " + var.getType().getTypeName() + " " + var.getIdentifier() + "\n";
+		}
+		
+		return str;
 	}
 	
 }
