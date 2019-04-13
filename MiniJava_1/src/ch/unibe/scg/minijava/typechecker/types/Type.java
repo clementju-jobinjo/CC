@@ -20,6 +20,16 @@ public class Type {
 	
 	public boolean isCompatibleWith(Type type) {
 		
-		return (type == this) ? true : this.parent.isCompatibleWith(type);
+		if (type == this) {
+			return true;
+		}
+		else {
+			if (this.parent == null) {
+				return false;
+			}
+			else {
+				return this.parent.isCompatibleWith(type);
+			}
+		}
 	}
 }

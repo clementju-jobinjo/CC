@@ -36,8 +36,31 @@ public class Scope {
 		return methods;
 	}
 	
+	public Method getMethod(String methodName) {
+		for (Method m : methods) {
+			if (m.getIdentifier().equals(methodName)) {
+				return m;
+			}
+		}
+		if (scopeEnglobant == null) {
+			throw new RuntimeException();
+		}
+		else {
+			return scopeEnglobant.getMethod(methodName);
+		}
+	}
+	
 	public List<Variable> getVariables() {
 		return variables;
+	}
+	
+	public Variable getVariable(String varName) {
+		for (Variable var : variables) {
+			if (var.getIdentifier().equals(varName)) {
+				return var;
+			}
+		}
+		throw new RuntimeException();
 	}
 	
 	public INode getScopeRelatedTo() {

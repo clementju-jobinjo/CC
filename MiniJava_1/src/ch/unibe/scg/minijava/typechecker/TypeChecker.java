@@ -18,6 +18,7 @@ import ch.unibe.scg.minijava.typechecker.types.Int;
 import ch.unibe.scg.minijava.typechecker.types.IntArray;
 import ch.unibe.scg.minijava.typechecker.visitors.AllScopesBuilder;
 import ch.unibe.scg.minijava.typechecker.visitors.AllTypesVisitor;
+import ch.unibe.scg.minijava.typechecker.visitors.EvaluatorVisitor;
 
 /**
  * Change at will.
@@ -31,33 +32,30 @@ public class TypeChecker {
 		INode n = (INode) node;
 		
 		try {
+			// create all types with respective inheritance
 			Map<String, Type> stringToTypes = createAllTypes(n);
 			
-//			for (Map.Entry<String, Type> in : stringToTypes.entrySet()) {
-//				System.out.println(in.getKey() + " -> " + ((in.getValue().getParentType() == null) ? "null" : in.getValue().getParentType().getTypeName()));
-//			}
+			// create all scopes
 			List<Scope> allScopes = createAllScopes(n, stringToTypes);
 			
 			for (Scope s : allScopes) {
 				System.out.println(s.toString());
 			}
 			
+			evaluate(n, allScopes);
+			
 			return true;
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (RuntimeException e) {
 			return false;
 		}
 	}
 	
 	private Map<String, Type> createAllTypes(INode n) {
+		
+		// build inheritance table
 		AllTypesVisitor visitor = new AllTypesVisitor();
 		n.accept(visitor);
-		// List<String> classNames = visitor.getClassNames();
 		Map<String, String> inheritances = visitor.getInheritances();
-		
-//		for (Map.Entry<String, String> in : inheritances.entrySet()) {
-//			System.out.println(in);
-//		}
 		
 		// creation of a map <ClassName, TypeObject>, required during the visit
 		Map<String, Type> stringToType = createClassObjects(inheritances);
@@ -66,7 +64,7 @@ public class TypeChecker {
 	}
 	
 	
-	private List<Scope> createAllScopes(INode n, Map<String, Type> stringToType) throws Exception {
+	private List<Scope> createAllScopes(INode n, Map<String, Type> stringToType) {
 		Scope globalScope = new Scope(null, n);
 		
 		// add primitive types
@@ -114,6 +112,11 @@ public class TypeChecker {
 		}
 		
 		return stringToType;
+	}
+	
+	private void evaluate(INode node, List<Scope> scopes) {
+		EvaluatorVisitor visitor = new EvaluatorVisitor(scopes);
+		node.accept(visitor);
 	}
 
 }

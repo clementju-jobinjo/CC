@@ -137,9 +137,9 @@ void Expression():
   | UnaryExpression() ExpPrime()
   | ParenthesisExpression() ExpPrime()
   | IntegerLiteral() ExpPrime()
-  | "this" ExpPrime()
-  | "true" ExpPrime()
-  | "false" ExpPrime()
+  | ThisExpression() ExpPrime()
+  | TrueExpression() ExpPrime()
+  | FalseExpression() ExpPrime()
 }
 
 void NewExpression():
@@ -177,6 +177,24 @@ void ParenthesisExpression():
 { }
 {
   < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT >
+}
+
+void ThisExpression():
+{ }
+{
+  "this"
+}
+
+void TrueExpression():
+{ }
+{
+  "true"
+}
+
+void FalseExpression():
+{ }
+{
+  "false"
 }
 
 void ExpPrime():
@@ -271,7 +289,6 @@ TOKEN : /* OPERATORS */
     | "-"
     | "*"
     | "<"
-    | "=="
     ) >
 }
 

@@ -43,6 +43,7 @@ import ch.unibe.scg.minijava.typechecker.types.IntArray;
 import ch.unibe.scg.minijava.typechecker.types.Method;
 import ch.unibe.scg.minijava.typechecker.types.Type;
 import ch.unibe.scg.minijava.typechecker.types.Variable;
+import ch.unibe.scg.minijava.typechecker.types.VoidType;
 import ch.unibe.scg.minijava.typechecker.types.Boolean;
 
 public class AllScopesBuilder extends DepthFirstVoidVisitor {
@@ -645,6 +646,9 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 				break;
 			case 2:
 				currentType = Boolean.BooleanSingleton;
+				break;
+			case 3: 
+				currentType = VoidType.VoidSingleton;
 				break;
 			case 4:
 				Identifier id = (Identifier) type.nodeChoice.choice;
