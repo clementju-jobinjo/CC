@@ -38,9 +38,9 @@ public class TypeChecker {
 			// create all scopes
 			List<Scope> allScopes = createAllScopes(n, stringToTypes);
 			
-			for (Scope s : allScopes) {
-				System.out.println(s.toString());
-			}
+//			for (Scope s : allScopes) {
+//				System.out.println(s.toString());
+//			}
 			
 			evaluate(n, allScopes);
 			

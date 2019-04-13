@@ -53,51 +53,57 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	
 	@Override
 	public void visit(Expression exp) {
-		
+		ExpressionTypeConstructor visitor = new ExpressionTypeConstructor(currentScope);
+		exp.accept(visitor);
+		String infixExpression = visitor.getInfixExpression();
+		System.out.println(infixExpression);
+		PostfixExpressionConstructor pf = new PostfixExpressionConstructor();
+		String postfixExpression = pf.postfix(infixExpression);
+		System.out.println(postfixExpression);
 	}
 	
-	@Override
-	public void visit(IntegerLiteral il) {
-		isCompatibleWithExpression(Int.IntSingleton);
-		expressionTypes.add(Int.IntSingleton);
-	}
-	
-	@Override
-	public void visit(TrueExpression tr) {
-		isCompatibleWithExpression(Boolean.BooleanSingleton);
-		expressionTypes.add(Boolean.BooleanSingleton);
-	}
-	
-	@Override
-	public void visit(FalseExpression il) {
-		isCompatibleWithExpression(Boolean.BooleanSingleton);
-		expressionTypes.add(Boolean.BooleanSingleton);
-	}
-	
-	@Override
-	public void visit(Identifier id) {
-		Variable var = currentScope.getVariable(id.nodeToken.tokenImage);
-		Type t = var.getType();
-		isCompatibleWithExpression(t);
-		expressionTypes.add(t);
-	}
-	
-	@Override
-	public void visit(BinaryOperator op) {
-		String operator = op.nodeToken.tokenImage;
-		
-		if (operator.equals("&&")) {
-			expressionTypes.add(Boolean.BooleanSingleton);
-		}
-		else {
-			expressionTypes.add(Int.IntSingleton);
-		}
-	}
-	
-	@Override
-	public void visit(UnaryOperator op) {
-		expressionTypes.add(Boolean.BooleanSingleton);
-	}
+//	@Override
+//	public void visit(IntegerLiteral il) {
+//		isCompatibleWithExpression(Int.IntSingleton);
+//		expressionTypes.add(Int.IntSingleton);
+//	}
+//	
+//	@Override
+//	public void visit(TrueExpression tr) {
+//		isCompatibleWithExpression(Boolean.BooleanSingleton);
+//		expressionTypes.add(Boolean.BooleanSingleton);
+//	}
+//	
+//	@Override
+//	public void visit(FalseExpression il) {
+//		isCompatibleWithExpression(Boolean.BooleanSingleton);
+//		expressionTypes.add(Boolean.BooleanSingleton);
+//	}
+//	
+//	@Override
+//	public void visit(Identifier id) {
+//		Variable var = currentScope.getVariable(id.nodeToken.tokenImage);
+//		Type t = var.getType();
+//		isCompatibleWithExpression(t);
+//		expressionTypes.add(t);
+//	}
+//	
+//	@Override
+//	public void visit(BinaryOperator op) {
+//		String operator = op.nodeToken.tokenImage;
+//		
+//		if (operator.equals("&&")) {
+//			expressionTypes.add(Boolean.BooleanSingleton);
+//		}
+//		else {
+//			expressionTypes.add(Int.IntSingleton);
+//		}
+//	}
+//	
+//	@Override
+//	public void visit(UnaryOperator op) {
+//		expressionTypes.add(Boolean.BooleanSingleton);
+//	}
 	
 	private void isCompatibleWithExpression(Type type) {
 		for (Type t : expressionTypes) {
