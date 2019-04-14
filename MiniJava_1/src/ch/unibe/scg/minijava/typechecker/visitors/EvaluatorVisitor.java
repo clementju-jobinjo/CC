@@ -3,18 +3,26 @@ package ch.unibe.scg.minijava.typechecker.visitors;
 import java.util.ArrayList;
 import java.util.List;
 
+import ch.unibe.scg.javacc.syntaxtree.Assigned;
+import ch.unibe.scg.javacc.syntaxtree.AssignmentStatement;
+import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementArrayLeft;
+import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementIdentifierLeft;
 import ch.unibe.scg.javacc.syntaxtree.BinaryOperator;
 import ch.unibe.scg.javacc.syntaxtree.Expression;
 import ch.unibe.scg.javacc.syntaxtree.FalseExpression;
 import ch.unibe.scg.javacc.syntaxtree.INode;
 import ch.unibe.scg.javacc.syntaxtree.Identifier;
+import ch.unibe.scg.javacc.syntaxtree.IfStatement;
 import ch.unibe.scg.javacc.syntaxtree.IntegerLiteral;
 import ch.unibe.scg.javacc.syntaxtree.MethodDeclaration;
+import ch.unibe.scg.javacc.syntaxtree.NodeListOptional;
 import ch.unibe.scg.javacc.syntaxtree.TrueExpression;
 import ch.unibe.scg.javacc.syntaxtree.UnaryOperator;
+import ch.unibe.scg.javacc.syntaxtree.WhileStatement;
 import ch.unibe.scg.javacc.visitor.DepthFirstVoidVisitor;
 import ch.unibe.scg.minijava.typechecker.scopes.Scope;
 import ch.unibe.scg.minijava.typechecker.types.Int;
+import ch.unibe.scg.minijava.typechecker.types.IntArray;
 import ch.unibe.scg.minijava.typechecker.types.Method;
 import ch.unibe.scg.minijava.typechecker.types.Type;
 import ch.unibe.scg.minijava.typechecker.types.Variable;
@@ -26,6 +34,7 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	private List<Scope> scopes;
 	private Scope currentScope;
 	private Type typeOfLastVisitedExpression;
+	private Type typeOfLastVisitedIdentifier;
 	
 	public EvaluatorVisitor(List<Scope> scopes) {
 		this.scopes = scopes;
@@ -35,25 +44,148 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	
 	@Override
 	public void visit(MethodDeclaration md) {
+		System.out.println("1");
 		Scope scope = getScope(md);
-		Scope parentScope = scope.getScopeEnglobant();	
-		Method method = parentScope.getMethod(md.identifier.nodeToken.tokenImage);
+		Method method = scope.getMethod(md.identifier.nodeToken.tokenImage);
 		
-		currentScope = scope;
+		for (Scope sc : scopes) {
+			if (sc.getScopeEnglobant() == scope) {
+				currentScope = sc;
+				break;
+			}
+		}
 		
 		Type returnType = method.getReturnType();
 		
 		if (returnType == VoidType.VoidSingleton) {
 			throw new RuntimeException();
 		}
-		else {
-			md.expression.accept(this);
+		
+		// (Statement() )*
+		NodeListOptional nodeListOptional2 = md.nodeListOptional1;
+		if (nodeListOptional2.present()) {
+			for (int i = 0; i < nodeListOptional2.size(); i++) {
+				INode node = nodeListOptional2.elementAt(i);
+				node.accept(this);
+			}
+		}
+		
+		// return Expression()
+		md.expression.accept(this);
+
+		if (typeOfLastVisitedExpression != returnType) {
+			throw new RuntimeException();
 		}
 	}
 	
 	@Override
+	public void visit(IfStatement st) {
+		System.out.println("2");
+		st.expression.accept(this);
+		if (typeOfLastVisitedExpression != Boolean.BooleanSingleton) {
+			throw new RuntimeException();
+		}
+		st.statement.accept(this);
+		st.statement1.accept(this);
+	}
+	
+	@Override
+	public void visit(WhileStatement st) {
+		System.out.println("3");
+		st.expression.accept(this);
+		if (typeOfLastVisitedExpression != Boolean.BooleanSingleton) {
+			throw new RuntimeException();
+		}
+		st.statement.accept(this);
+	}
+	
+//	@Override
+//	public void visit(AssignmentStatement st) {
+//		System.out.println("4");
+//		System.out.println("IOJFDIlfs: " + typeOfLastVisitedExpression);
+//		// visit part before '='
+//		st.assigned.accept(this);
+//
+//		
+//		
+//		// visit part after '='
+//		st.expression.accept(this);
+//
+//		if (typeOfLastVisitedIdentifier != typeOfLastVisitedExpression) {
+//			throw new RuntimeException();
+//		}
+//
+//	}
+	
+	// Identifier() "=" Expression() ";"
+	@Override
+	public void visit(AssignmentStatementIdentifierLeft e){
+		System.out.println("8908");
+		e.identifier.accept(this);
+		Type leftType = typeOfLastVisitedIdentifier;
+		
+		e.expression.accept(this);
+		Type rightType = typeOfLastVisitedExpression;
+		
+		if (!leftType.getTypeName().equals(rightType.getTypeName())) {
+			throw new RuntimeException();
+		}
+	}
+
+	// Identifier() ArrayAccess() "=" Expression() ";"
+	@Override
+	public void visit(AssignmentStatementArrayLeft e){
+		e.identifier.accept(this);
+		Type typeOfId = typeOfLastVisitedIdentifier;
+		
+		System.out.println("ID type: " + typeOfId.getTypeName());
+		
+		e.arrayAccess.accept(this);
+		Type intraBracketType = typeOfLastVisitedExpression;
+		
+		System.out.println("intra type: " + intraBracketType.getTypeName());
+		
+		if (intraBracketType != Int.IntSingleton) {
+			throw new RuntimeException();
+		}
+		
+		e.expression.accept(this);
+		
+		Type rightType = typeOfLastVisitedExpression;
+		System.out.println("Right type: " + rightType.getTypeName());
+		
+		if (rightType != Int.IntSingleton) {
+			throw new RuntimeException();
+		}
+	}
+	
+	@Override
+	public void visit(Identifier id) {
+		System.out.println("5");
+		System.out.println(id.nodeToken.tokenImage);
+		
+		Type identifierType = null;
+		
+		for (Scope sc : scopes) {
+			Variable t = sc.getVariableNonRecursive(id.nodeToken.tokenImage);
+
+			if (t != null) {
+				identifierType = t.getType();
+				break;
+			}
+		}
+		
+		if (identifierType == null) {
+			throw new RuntimeException();
+		}
+		
+		typeOfLastVisitedIdentifier = identifierType;
+	}
+	
+	@Override
 	public void visit(Expression exp) {
-		ExpressionTypeConstructor visitor = new ExpressionTypeConstructor(currentScope);
+		System.out.println("6");
+		ExpressionTypeConstructor visitor = new ExpressionTypeConstructor(currentScope, scopes);
 		exp.accept(visitor);
 		String infixExpression = visitor.getInfixExpression();
 		System.out.println(infixExpression);

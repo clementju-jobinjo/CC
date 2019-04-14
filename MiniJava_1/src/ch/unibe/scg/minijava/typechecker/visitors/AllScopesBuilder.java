@@ -150,8 +150,9 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 				// name
 				String methodName = node.identifier.nodeToken.tokenImage;
 				
-				// type
+				// return type
 				node.type.accept(this);
+				Type returnType = currentType;
 				
 				// arguments
 				List<Variable> args = new ArrayList<Variable>();
@@ -192,7 +193,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 					}
 				}
 				
-				currentScope.addMethod(new Method(methodName, currentType, args));
+				currentScope.addMethod(new Method(methodName, returnType, args));
 				classOrMethodOrVariableToScope.put(methodName, currentScope);
 				
 				node.accept(this);
@@ -221,6 +222,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		
 		// get return type
 		methodDeclaration.type.accept(this);
+		Type returnType = currentType;
 
 
 		// Identifier()
@@ -230,7 +232,6 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		Scope parentScope = classOrMethodOrVariableToScope.get(methodName);
 		
 		if (parentScope == null) {
-			
 			
 			// arguments
 			List<Variable> args = new ArrayList<Variable>();
@@ -272,8 +273,9 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 			}
 			
 			// add method to global scope
-			scopes.get(0).addMethod(new Method(methodName, currentType, args));
+			scopes.get(0).addMethod(new Method(methodName, returnType, args));
 			classOrMethodOrVariableToScope.put(methodName, scopes.get(0));
+			
 		} 
 
 		
@@ -281,14 +283,14 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		Scope currentScope = new Scope(classOrMethodOrVariableToScope.get(methodName), methodDeclaration);
 		scopes.add(currentScope);
 		
-		List<Variable> arguments = classOrMethodOrVariableToScope.get(methodName).getVariables();
+		List<Variable> arguments = classOrMethodOrVariableToScope.get(methodName).getMethod(methodName).getArguments();
+		
 		
 		for (Variable arg : arguments) {
 			currentScope.addVariable(arg);
 		}
 
-
-
+		
 		// ( LOOKAHEAD(2) VarDeclaration() )*
 		NodeListOptional nodeListOptional = methodDeclaration.nodeListOptional;
 		if (nodeListOptional.present()) {
@@ -299,340 +301,11 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 				
 				node.type.accept(this);
 				
-				System.out.println(currentType.getTypeName() + " " + varName);
 				currentScope.addVariable(new Variable(varName, currentType));
 			}
 		}
 	}
 
-
-//	// "int" < BRACKET_LEFT > < BRACKET_RIGHT >
-//	@Override
-//	public void visit(IntArrayDeclaration intArr) {
-//		// "int"
-//		intArr.nodeToken.accept(this);
-//
-//		// < BRACKET_LEFT >
-//		intArr.nodeToken1.accept(this);
-//
-//		// < BRACKET_RIGHT >
-//		intArr.nodeToken2.accept(this);
-//	}
-//
-//
-//	// "{" ( Statement() )* "}"
-//	@Override
-//	public void visit(BlockStatement blockStatement) {
-//
-//		// "{"
-//		blockStatement.nodeToken.accept(this);
-//		// indent+=4;
-//
-//
-//		// Statement
-//		if (blockStatement.nodeListOptional.present()) {
-//			for (int i = 0; i < blockStatement.nodeListOptional.size(); ++i) {
-//				blockStatement.nodeListOptional.elementAt(i).accept(this);
-//				if(blockStatement.nodeListOptional.size()>1 && i<blockStatement.nodeListOptional.size()-1) {
-//
-//				}
-//			}
-//			// indent-=4;
-//
-//		}
-//		// "}"
-//		blockStatement.nodeToken1.accept(this);
-//	}
-//
-//
-//	// "if" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > Statement() "else" Statement()
-//	@Override
-//	public void visit(IfStatement ifStatement) {
-//		// "if"
-//		ifStatement.nodeToken.accept(this);
-//
-//
-//		// < PARENTHESIS_LEFT >
-//		ifStatement.nodeToken1.accept(this);
-//
-//
-//		// Expression()
-//		ifStatement.expression.accept(this);
-//
-//
-//		// < PARENTHESIS_RIGHT >
-//		ifStatement.nodeToken2.accept(this);
-//
-//
-//		// Statement()
-//		ifStatement.statement.accept(this);
-//
-//
-//		// "else"
-//		ifStatement.nodeToken3.accept(this);
-//
-//
-//		// Statement()
-//		ifStatement.statement1.accept(this);
-//	}
-//
-//
-//	// "while" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > Statement()
-//	@Override
-//	public void visit(WhileStatement whileStatement) {
-//		// "while"
-//		whileStatement.nodeToken.accept(this);
-//
-//
-//		// < PARENTHESIS_LEFT >
-//		whileStatement.nodeToken1.accept(this);
-//
-//		// Expression()
-//		whileStatement.expression.accept(this);
-//
-//		// < PARENTHESIS_RIGHT >
-//		whileStatement.nodeToken2.accept(this);
-//
-//
-//		// Statement()
-//		whileStatement.statement.accept(this);
-//	}
-//
-//
-//	// "System.out.println" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > ";"
-//	@Override
-//	public void visit(PrintStatement printStatement) {
-//		// "System.out.println"
-//		printStatement.nodeToken.accept(this);
-//
-//		// < PARENTHESIS_LEFT >
-//		printStatement.nodeToken1.accept(this);
-//
-//		// Expression()
-//		printStatement.expression.accept(this);
-//
-//		// < PARENTHESIS_RIGHT >
-//		printStatement.nodeToken2.accept(this);
-//
-//		// ";"
-//		printStatement.nodeToken3.accept(this);
-//	}
-//
-//
-//	// Assigned() "=" Expression() ";"
-//	@Override
-//	public void visit(AssignmentStatement assignmentStatement) {
-//		// Assigned()
-//		assignmentStatement.assigned.accept(this);
-//
-//
-//		// "="
-//		assignmentStatement.nodeToken.accept(this);
-//
-//
-//		// Expression()
-//		assignmentStatement.expression.accept(this);
-//
-//		// ";"
-//		assignmentStatement.nodeToken1.accept(this);
-//	}
-//
-//
-//	@Override
-//	public void visit(ArrayAccessIdentifier arrayAccessIdentifier) {
-//		// Identifier()
-//		arrayAccessIdentifier.identifier.accept(this);
-//
-//		// ArrayAccess()
-//		arrayAccessIdentifier.arrayAccess.accept(this);
-//	}
-//
-//
-//	// < BRACKET_LEFT > Expression() < BRACKET_RIGHT >
-//	@Override
-//	public void visit(ArrayAccess arrayAccess) {
-//		// < BRACKET_LEFT >
-//		arrayAccess.nodeToken.accept(this);
-//
-//		// Expression()
-//		arrayAccess.expression.accept(this);
-//
-//		// < BRACKET_RIGHT >
-//		arrayAccess.nodeToken1.accept(this);
-//	}
-//
-//
-//	// "new" ConstructionCall()
-//	@Override
-//	public void visit(NewExpression newExpression) {
-//		// "new"
-//		newExpression.nodeToken.accept(this);
-//
-//
-//		// ConstructionCall()
-//		newExpression.constructionCall.accept(this);
-//	}
-//
-//
-//	// "int" < BRACKET_LEFT > Expression() < BRACKET_RIGHT >
-//	@Override
-//	public void visit(IntArrayConstructionCall constructionCall) {
-//		// "int"
-//		constructionCall.nodeToken.accept(this);
-//
-//		// < BRACKET_LEFT >
-//		constructionCall.nodeToken1.accept(this);
-//
-//		// Expression()
-//		constructionCall.expression.accept(this);
-//
-//		// < BRACKET_RIGHT >
-//		constructionCall.nodeToken2.accept(this);
-//	}
-//
-//
-//	// Identifier() < PARENTHESIS_LEFT > <PARENTHESIS_RIGHT >
-//	@Override
-//	public void visit(ObjectConstructionCall constructionCall) {
-//		// Identifier()
-//		constructionCall.identifier.accept(this);
-//
-//		// < PARENTHESIS_LEFT >
-//		constructionCall.nodeToken.accept(this);
-//
-//		// <PARENTHESIS_RIGHT >
-//		constructionCall.nodeToken1.accept(this);
-//	}
-//
-//
-//	// UnaryOperator() Expression()
-//	@Override
-//	public void visit(UnaryExpression unaryExp) {
-//		// UnaryOperator()
-//		unaryExp.unaryOperator.accept(this);
-//
-//		// Expression()
-//		unaryExp.expression.accept(this);
-//	}
-//
-//	// < UNOP >
-//	@Override
-//	public void visit(UnaryOperator unOp) {
-//		unOp.nodeToken.accept(this);
-//	}
-//
-//
-//	// < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT >
-//	@Override
-//	public void visit(ParenthesisExpression parExp) {
-//		// < PARENTHESIS_LEFT >
-//		parExp.nodeToken.accept(this);
-//
-//		// Expression()
-//		parExp.expression.accept(this);
-//
-//		// < PARENTHESIS_RIGHT >
-//		parExp.nodeToken1.accept(this);
-//	}
-//
-//
-//	@Override
-//	public void visit(BinaryOperator binOp) {
-//
-//		binOp.nodeToken.accept(this);
-//
-//	}
-//
-//	// < BRACKET_LEFT > Expression() < BRACKET_RIGHT >
-//	@Override
-//	public void visit(ArrayCall arrayCall) {
-//		// < BRACKET_LEFT >
-//		arrayCall.nodeToken.accept(this);
-//
-//		// Expression()
-//		arrayCall.expression.accept(this);
-//
-//		// < BRACKET_RIGHT >
-//		arrayCall.nodeToken1.accept(this);
-//	}
-//
-//
-//	// < DOT > "length"
-//	@Override
-//	public void visit(DotArrayLength dotArray) {
-//		// < DOT >
-//		dotArray.nodeToken.accept(this);
-//
-//		// "length"
-//		dotArray.nodeToken1.accept(this);
-//	}
-//
-//	// < DOT > Identifier() < PARENTHESIS_LEFT > ( Expression() ( < COMMA > Expression() )* )? < PARENTHESIS_RIGHT >
-//	@Override
-//	public void visit(DotFunctionCall dotFct) {
-//		// < DOT >
-//		dotFct.nodeToken.accept(this);
-//
-//
-//		// Identifier()
-//		dotFct.identifier.accept(this);
-//
-//
-//		// < PARENTHESIS_LEFT >
-//		dotFct.nodeToken1.accept(this);
-//
-//
-//		// ( Expression() ( < COMMA > Expression() )* )?
-//		if(dotFct.nodeOptional.present()) {
-//			NodeSequence nodeSequence = (NodeSequence)dotFct.nodeOptional.node;
-//			INode exp = nodeSequence.elementAt(0);
-//			exp.accept(this);
-//
-//			NodeListOptional exp2 = (NodeListOptional)nodeSequence.elementAt(1);
-//			if (exp2.present()) {
-//				for (int i = 0; i < exp2.size(); i++) {
-//					NodeSequence commaExpression = (NodeSequence) exp2.elementAt(i);
-//					INode comma = commaExpression.elementAt(0);
-//					comma.accept(this);
-//
-//					INode expression33 = commaExpression.elementAt(1);
-//					expression33.accept(this);
-//
-//				}
-//			}
-//		}
-//
-//
-//		// < PARENTHESIS_RIGHT >
-//		dotFct.nodeToken2.accept(this);
-//	}
-//
-//
-//	// Boolean
-//	@Override
-//	public void visit(BooleanType booleanType) {
-//
-//	}
-//
-//
-//	// Identifier --> Token
-//	@Override
-//	public void visit(Identifier identifier) {
-//		identifier.nodeToken.accept(this);
-//	}
-//
-//
-//	// IntegerLiteral
-//	public void visit(IntegerLiteral integerLiteral) {
-//		integerLiteral.nodeToken.accept(this);
-//	}
-//
-//
-//	// Tokens -> Identifiers, Integer_literals
-//	@Override
-//	public void visit(NodeToken node) {
-//
-//	}
 	
 	// Type
 	public void visit(ch.unibe.scg.javacc.syntaxtree.Type type) {

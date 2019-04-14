@@ -57,10 +57,26 @@ public class Scope {
 	public Variable getVariable(String varName) {
 		for (Variable var : variables) {
 			if (var.getIdentifier().equals(varName)) {
+				System.out.println("On passe pas la");
 				return var;
 			}
 		}
-		throw new RuntimeException();
+		if (scopeEnglobant != null) {
+			System.out.println("ON passe ici");
+			return this.scopeEnglobant.getVariable(varName);
+		}
+		else {
+			throw new RuntimeException();
+		}
+	}
+	
+	public Variable getVariableNonRecursive(String varName) {
+		for (Variable var : variables) {
+			if (var.getIdentifier().equals(varName)) {
+				return var;
+			}
+		}
+		return null;
 	}
 	
 	public INode getNodeRelatedTo() {

@@ -78,7 +78,8 @@ void Statement() :
   | IfStatement()
   | WhileStatement()
   | PrintStatement()
-  | AssignmentStatement()
+  | LOOKAHEAD(2) AssignmentStatementIdentifierLeft()
+  | AssignmentStatementArrayLeft()
 }
 
 void BlockStatement():
@@ -104,23 +105,16 @@ void PrintStatement():
   "System.out.println" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > ";"
 }
 
-void AssignmentStatement():
+void AssignmentStatementIdentifierLeft():
 { }
 {
-  Assigned() "=" Expression() ";"
+  Identifier() "=" Expression() ";"
 }
 
-void Assigned():
+void AssignmentStatementArrayLeft():
 { }
 {
-  LOOKAHEAD(2) ArrayAccessIdentifier()
-  | Identifier()
-}
-
-void ArrayAccessIdentifier():
-{ }
-{
-  Identifier() ArrayAccess()
+  Identifier() ArrayAccess() "=" Expression() ";"
 }
 
 void ArrayAccess():
