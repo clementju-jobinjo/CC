@@ -460,32 +460,43 @@ public class PrettyPrinter extends DepthFirstVoidVisitor {
 	}
 	
 	
-	// Assigned() "=" Expression() ";"
+	// Identifier() "=" Expression() ";"
 	@Override
-	public void visit(AssignmentStatement assignmentStatement) {
+	public void visit(AssignmentStatementIdentifierLeft assignmentStatementIdentifierLeft) {
 		// Assigned()
-		assignmentStatement.assigned.accept(this);
+		assignmentStatementIdentifierLeft.identifier.accept(this);
 		space();
 		
 		// "=" 
-		assignmentStatement.nodeToken.accept(this);
+		assignmentStatementIdentifierLeft.nodeToken.accept(this);
 		space();
 		
 		// Expression()
-		assignmentStatement.expression.accept(this);
+		assignmentStatementIdentifierLeft.expression.accept(this);
 		
 		// ";"
-		assignmentStatement.nodeToken1.accept(this);
+		assignmentStatementIdentifierLeft.nodeToken1.accept(this);
 	}
 	
 	
 	@Override
-	public void visit(ArrayAccessIdentifier arrayAccessIdentifier) {
+	public void visit(AssignmentStatementArrayLeft assignmentStatementArrayLeft) {
 		// Identifier()
-		arrayAccessIdentifier.identifier.accept(this);
+		assignmentStatementArrayLeft.identifier.accept(this);
 		
 		// ArrayAccess()
-		arrayAccessIdentifier.arrayAccess.accept(this);
+		assignmentStatementArrayLeft.arrayAccess.accept(this);
+		space();
+		
+		// "="
+		assignmentStatementArrayLeft.nodeToken.accept(this);
+		space();
+		
+		// Expression()
+		assignmentStatementArrayLeft.expression.accept(this);
+		
+		// ";"
+		assignmentStatementArrayLeft.nodeToken1.accept(this);
 	}
 	
 	
