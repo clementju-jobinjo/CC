@@ -14,14 +14,14 @@ public class Scope {
 	private List<Type> classes;
 	private List<Method> methods;
 	private List<Variable> variables;
-	private INode scopeRelatedTo;
+	private INode nodeRelatedTo;
 	
-	public Scope(Scope scopeEnglobant, INode scopeRelatedTo) {
+	public Scope(Scope scopeEnglobant, INode nodeRelatedTo) {
 		this.scopeEnglobant = scopeEnglobant;
 		classes = new ArrayList<Type>();
 		methods = new ArrayList<Method>();
 		variables =  new ArrayList<Variable>();
-		this.scopeRelatedTo = scopeRelatedTo;
+		this.nodeRelatedTo = nodeRelatedTo;
 	}
 	
 	public Scope getScopeEnglobant() {
@@ -63,8 +63,18 @@ public class Scope {
 		throw new RuntimeException();
 	}
 	
-	public INode getScopeRelatedTo() {
-		return scopeRelatedTo;
+	public INode getNodeRelatedTo() {
+		return nodeRelatedTo;
+	}
+	
+	public Type getTypeFromString(String str) {
+		for (Type t : classes) {
+			if (str.equals(t.getTypeName())) {
+				return t;
+			}
+		}
+		
+		return null;
 	}
 	
 	public void setScopeEnglobant(Scope sc) {

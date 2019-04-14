@@ -117,6 +117,7 @@ public class TypeChecker {
 	private void evaluate(INode node, List<Scope> scopes) {
 		EvaluatorVisitor visitor = new EvaluatorVisitor(scopes);
 		node.accept(visitor);
+//		System.out.println(visitor.getTypeOfLastExpression().getTypeName());
 	}
 
 }

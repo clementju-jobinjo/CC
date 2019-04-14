@@ -24,13 +24,13 @@ import ch.unibe.scg.minijava.typechecker.types.Boolean;
 public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	
 	private List<Scope> scopes;
-	private List<Type> expressionTypes;
 	private Scope currentScope;
+	private Type typeOfLastVisitedExpression;
 	
 	public EvaluatorVisitor(List<Scope> scopes) {
 		this.scopes = scopes;
-		expressionTypes = new ArrayList<Type>();
 		currentScope = scopes.get(0);
+		
 	}
 	
 	@Override
@@ -60,6 +60,24 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 		PostfixExpressionConstructor pf = new PostfixExpressionConstructor();
 		String postfixExpression = pf.postfix(infixExpression);
 		System.out.println(postfixExpression);
+		String expTypeStr = pf.evaluatePostfix(postfixExpression);
+		System.out.println(expTypeStr);
+		Type expType = null;
+		
+		for (Scope sc : scopes) {
+			Type t = sc.getTypeFromString(expTypeStr);
+			if (t != null) {
+				expType = t;
+				break;
+			}
+		}
+		
+		if (expType == null) {
+			throw new RuntimeException();
+		}
+		
+		typeOfLastVisitedExpression = expType;
+		
 	}
 	
 //	@Override
@@ -105,17 +123,21 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 //		expressionTypes.add(Boolean.BooleanSingleton);
 //	}
 	
-	private void isCompatibleWithExpression(Type type) {
-		for (Type t : expressionTypes) {
-			if (!t.isCompatibleWith(type)) {
-				throw new RuntimeException();
-			};
-		}
+//	private void isCompatibleWithExpression(Type type) {
+//		for (Type t : expressionTypes) {
+//			if (!t.isCompatibleWith(type)) {
+//				throw new RuntimeException();
+//			};
+//		}
+//	}
+	
+	public Type getTypeOfLastExpression() {
+		return typeOfLastVisitedExpression;
 	}
 	
 	private Scope getScope(INode n) {
 		for (Scope sc : scopes) {
-			if (sc.getScopeRelatedTo() == n) {
+			if (sc.getNodeRelatedTo() == n) {
 				return sc;
 			}
 		}
