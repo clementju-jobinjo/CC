@@ -6,9 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import ch.unibe.scg.javacc.syntaxtree.ArrayAccess;
-import ch.unibe.scg.javacc.syntaxtree.ArrayAccessIdentifier;
 import ch.unibe.scg.javacc.syntaxtree.ArrayCall;
-import ch.unibe.scg.javacc.syntaxtree.AssignmentStatement;
 import ch.unibe.scg.javacc.syntaxtree.BinaryOperator;
 import ch.unibe.scg.javacc.syntaxtree.BlockStatement;
 import ch.unibe.scg.javacc.syntaxtree.BooleanType;

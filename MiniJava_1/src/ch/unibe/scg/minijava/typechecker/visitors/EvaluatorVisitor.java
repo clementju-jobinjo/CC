@@ -3,8 +3,7 @@ package ch.unibe.scg.minijava.typechecker.visitors;
 import java.util.ArrayList;
 import java.util.List;
 
-import ch.unibe.scg.javacc.syntaxtree.Assigned;
-import ch.unibe.scg.javacc.syntaxtree.AssignmentStatement;
+
 import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementArrayLeft;
 import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementIdentifierLeft;
 import ch.unibe.scg.javacc.syntaxtree.BinaryOperator;
