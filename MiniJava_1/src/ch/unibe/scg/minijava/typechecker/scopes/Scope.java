@@ -101,6 +101,7 @@ public class Scope {
 	
 	public Type getTypeFromString(String str) {
 		for (Type t : classes) {
+			System.out.println(" >>> " + t.getTypeName());
 			if (str.equals(t.getTypeName())) {
 				return t;
 			}
