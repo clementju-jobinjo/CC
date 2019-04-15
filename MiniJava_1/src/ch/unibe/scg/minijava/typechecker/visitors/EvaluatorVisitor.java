@@ -94,7 +94,7 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 		// return Expression()
 		md.expression.accept(this);
 
-		if (typeOfLastVisitedExpression != returnType) {
+		if (typeOfLastVisitedExpression.getTypeName() != returnType.getTypeName()) {
 			throw new RuntimeException();
 		}
 	}
