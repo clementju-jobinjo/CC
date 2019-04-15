@@ -50,6 +50,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 	private Map<String, Type> stringToType;
 	private Map<String, Scope> classOrMethodOrVariableToScope;
 	private Type currentType;
+	private Scope scopeMethodDirectAccess;
 
 	public AllScopesBuilder(Scope globalScope, Map<String, Type> stringToType) {
 		super();
@@ -57,6 +58,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		scopes.add(globalScope);
 		this.stringToType = stringToType;
 		classOrMethodOrVariableToScope = new HashMap<String, Scope>();
+		scopeMethodDirectAccess = globalScope;
 	}
 	
 	public List<Scope> getAllScopes(){
@@ -110,6 +112,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		// create scope for the current class
 		Scope currentScope = new Scope(scopes.get(0), classDeclaration);
 		scopes.add(currentScope);
+		scopeMethodDirectAccess = currentScope;
 		
 		
 		// link class name to scope
@@ -149,56 +152,57 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 			for (int i = 0; i < nodeListOptional1.size(); i++) {
 				MethodDeclaration node = (MethodDeclaration)nodeListOptional1.elementAt(i);
 				
-				// name
-				String methodName = node.identifier.nodeToken.tokenImage;
-				
-				// return type
-				node.type.accept(this);
-				Type returnType = currentType;
-				
-				// arguments
-				List<Variable> args = new ArrayList<Variable>();
-				
-				NodeOptional nodeOptional = node.nodeOptional;
-				if (nodeOptional.present()) {
-					NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
-					
-					// First argument
-					// "Type" first arg
-					INode nodeType = nodeSequence.elementAt(0);
-					nodeType.accept(this);
-					
-					// Identifier first arg
-					Identifier nodeIdentifier = (Identifier)nodeSequence.elementAt(1);
-					
-					args.add(new Variable(nodeIdentifier.nodeToken.tokenImage, currentType));
-					
-					
-					
-					//  ("," Type() Identifier() )*
-					NodeListOptional nodeListOptional2 = (NodeListOptional) nodeSequence.elementAt(2);
-					if (nodeListOptional2.present()) {
-						for (int j = 0; j < nodeListOptional2.size(); j++) {
-							INode node2 = nodeListOptional2.elementAt(j);
-							NodeSequence nodeSequence2 = (NodeSequence) node2;
-							
-							// Type arg i+1
-							INode type2 = nodeSequence2.elementAt(1);
-							type2.accept(this);
-
-							// Identifier arg i+1
-							Identifier identifier2 = (Identifier)nodeSequence2.elementAt(2);
-							
-							args.add(new Variable(identifier2.nodeToken.tokenImage, currentType));
-
-						}
-					}
-				}
-				
-				currentScope.addMethod(new Method(methodName, returnType, args));
-				classOrMethodOrVariableToScope.put(methodName, currentScope);
-				
 				node.accept(this);
+//				// name
+//				String methodName = node.identifier.nodeToken.tokenImage;
+//				
+//				// return type
+//				node.type.accept(this);
+//				Type returnType = currentType;
+//				
+//				// arguments
+//				List<Variable> args = new ArrayList<Variable>();
+//				
+//				NodeOptional nodeOptional = node.nodeOptional;
+//				if (nodeOptional.present()) {
+//					NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
+//					
+//					// First argument
+//					// "Type" first arg
+//					INode nodeType = nodeSequence.elementAt(0);
+//					nodeType.accept(this);
+//					
+//					// Identifier first arg
+//					Identifier nodeIdentifier = (Identifier)nodeSequence.elementAt(1);
+//					
+//					args.add(new Variable(nodeIdentifier.nodeToken.tokenImage, currentType));
+//					
+//					
+//					
+//					//  ("," Type() Identifier() )*
+//					NodeListOptional nodeListOptional2 = (NodeListOptional) nodeSequence.elementAt(2);
+//					if (nodeListOptional2.present()) {
+//						for (int j = 0; j < nodeListOptional2.size(); j++) {
+//							INode node2 = nodeListOptional2.elementAt(j);
+//							NodeSequence nodeSequence2 = (NodeSequence) node2;
+//							
+//							// Type arg i+1
+//							INode type2 = nodeSequence2.elementAt(1);
+//							type2.accept(this);
+//
+//							// Identifier arg i+1
+//							Identifier identifier2 = (Identifier)nodeSequence2.elementAt(2);
+//							
+//							args.add(new Variable(identifier2.nodeToken.tokenImage, currentType));
+//
+//						}
+//					}
+//				}
+//				
+//				currentScope.addMethod(new Method(methodName, returnType, args));
+//				classOrMethodOrVariableToScope.put(methodName, currentScope);
+//				
+//				node.accept(this);
 			}
 
 		}
@@ -221,6 +225,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(MethodDeclaration methodDeclaration) {
 		
+		Scope internalMethodScope = new Scope(scopeMethodDirectAccess, methodDeclaration);;
 		
 		// get return type
 		methodDeclaration.type.accept(this);
@@ -230,69 +235,68 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		// Identifier()
 		String methodName = methodDeclaration.identifier.nodeToken.tokenImage;
 		
-		// find scope of method
-		Scope parentScope = classOrMethodOrVariableToScope.get(methodName);
+//		// find scope of method
+//		Scope parentScope = classOrMethodOrVariableToScope.get(methodName);
+//		
+			
+		// arguments
+		List<Variable> args = new ArrayList<Variable>();
 		
-		if (parentScope == null) {
+		NodeOptional nodeOptional = methodDeclaration.nodeOptional;
+		if (nodeOptional.present()) {
+			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
 			
-			// arguments
-			List<Variable> args = new ArrayList<Variable>();
+			// First argument
+			// "Type" first arg
+			INode nodeType = nodeSequence.elementAt(0);
+			nodeType.accept(this);
 			
-			NodeOptional nodeOptional = methodDeclaration.nodeOptional;
-			if (nodeOptional.present()) {
-				NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
-				
-				// First argument
-				// "Type" first arg
-				INode nodeType = nodeSequence.elementAt(0);
-				nodeType.accept(this);
-				
-				// Identifier first arg
-				Identifier nodeIdentifier = (Identifier)nodeSequence.elementAt(1);
-				
-				args.add(new Variable(nodeIdentifier.nodeToken.tokenImage, currentType));
-				
-				
-				
-				//  ("," Type() Identifier() )*
-				NodeListOptional nodeListOptional2 = (NodeListOptional) nodeSequence.elementAt(2);
-				if (nodeListOptional2.present()) {
-					for (int j = 0; j < nodeListOptional2.size(); j++) {
-						INode node2 = nodeListOptional2.elementAt(j);
-						NodeSequence nodeSequence2 = (NodeSequence) node2;
-						
-						// Type arg i+1
-						INode type2 = nodeSequence2.elementAt(1);
-						type2.accept(this);
+			// Identifier first arg
+			Identifier nodeIdentifier = (Identifier)nodeSequence.elementAt(1);
+			
+			args.add(new Variable(nodeIdentifier.nodeToken.tokenImage, currentType));
+			
+			
+			
+			//  ("," Type() Identifier() )*
+			NodeListOptional nodeListOptional2 = (NodeListOptional) nodeSequence.elementAt(2);
+			if (nodeListOptional2.present()) {
+				for (int j = 0; j < nodeListOptional2.size(); j++) {
+					INode node2 = nodeListOptional2.elementAt(j);
+					NodeSequence nodeSequence2 = (NodeSequence) node2;
+					
+					// Type arg i+1
+					INode type2 = nodeSequence2.elementAt(1);
+					type2.accept(this);
 
-						// Identifier arg i+1
-						Identifier identifier2 = (Identifier)nodeSequence2.elementAt(2);
-						
-						args.add(new Variable(identifier2.nodeToken.tokenImage, currentType));
+					// Identifier arg i+1
+					Identifier identifier2 = (Identifier)nodeSequence2.elementAt(2);
+					
+					args.add(new Variable(identifier2.nodeToken.tokenImage, currentType));
 
-					}
 				}
 			}
-			
-			// add method to global scope
-			scopes.get(0).addMethod(new Method(methodName, returnType, args));
-			classOrMethodOrVariableToScope.put(methodName, scopes.get(0));
-			
-		} 
-
-		
-		// create internal method scope
-		Scope currentScope = new Scope(classOrMethodOrVariableToScope.get(methodName), methodDeclaration);
-		scopes.add(currentScope);
-		
-		List<Variable> arguments = classOrMethodOrVariableToScope.get(methodName).getMethod(methodName).getArguments();
-		
-		
-		for (Variable arg : arguments) {
-			currentScope.addVariable(arg);
 		}
-
 		
+		// add method to global scope
+		scopeMethodDirectAccess.addMethod(new Method(methodName, returnType, args));
+		classOrMethodOrVariableToScope.put(methodName, internalMethodScope);
+			
+//
+//		
+//		// create internal method scope
+//		Scope currentScope = new Scope(classOrMethodOrVariableToScope.get(methodName), methodDeclaration);
+		scopes.add(internalMethodScope);
+//		classOrMethodOrVariableToScope.put(methodName, currentScope);
+//		
+//		List<Variable> arguments = classOrMethodOrVariableToScope.get(methodName).getMethod(methodName).getArguments();
+//		
+//		
+		for (Variable arg : args) {
+			internalMethodScope.addVariable(arg);
+		}
+//
+//		
 		// ( LOOKAHEAD(2) VarDeclaration() )*
 		NodeListOptional nodeListOptional = methodDeclaration.nodeListOptional;
 		if (nodeListOptional.present()) {
@@ -303,7 +307,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 				
 				node.type.accept(this);
 				
-				currentScope.addVariable(new Variable(varName, currentType));
+				internalMethodScope.addVariable(new Variable(varName, currentType));
 			}
 		}
 	}

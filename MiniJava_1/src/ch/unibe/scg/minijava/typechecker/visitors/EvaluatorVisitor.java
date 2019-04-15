@@ -65,7 +65,11 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(MethodDeclaration md) {
 		System.out.println("1");
-		Scope scope = getScope(md);
+
+		
+//		Scope scope = getScope(md);
+		Scope scope = classOrMethodOrVariableToScope.get(md.identifier.nodeToken.tokenImage);
+		System.out.println("sap9iuroe" + scope);
 		Method method = scope.getMethod(md.identifier.nodeToken.tokenImage);
 		
 //		for (Scope sc : scopes) {
@@ -74,6 +78,7 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 //				break;
 //			}
 //		}
+		
 		currentScope = scope;
 		System.out.println("CURRENT: " + scope);
 		Type returnType = method.getReturnType();
@@ -302,12 +307,12 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 		return typeOfLastVisitedExpression;
 	}
 	
-	private Scope getScope(INode n) {
-		for (Scope sc : scopes) {
-			if (sc.getNodeRelatedTo() == n) {
-				return sc;
-			}
-		}
-		return null;
-	}
+//	private Scope getScope(INode n) {
+//		for (Scope sc : scopes) {
+//			if (sc.getNodeRelatedTo() == n) {
+//				return sc;
+//			}
+//		}
+//		return null;
+//	}
 }

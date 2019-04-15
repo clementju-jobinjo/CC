@@ -77,19 +77,27 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 	public void visit(Identifier id) {
 		System.out.println("66");
 		Type t = null;
+		System.out.println(currentScope);
 	
-		for (Scope s : scopes) {
-			Variable var = s.getVariableNonRecursive(id.nodeToken.tokenImage);
-			if (var != null) {
-				t =  var.getType();
-				break;
-			}
-		}
+//		for (Scope s : scopes) {
+//			Variable var = s.getVariableNonRecursive(id.nodeToken.tokenImage);
+//			if (var != null) {
+//				t =  var.getType();
+//				break;
+//			}
+//		}
+		
+		Variable var = currentScope.getVariable(id.nodeToken.tokenImage);
+		
+		t = var.getType();
+		
+		
+		
 		if(t != null) {
-		System.out.println(t.getTypeName());
-		System.out.println("67");
-		infixExpression.append(t.getTypeName());
-		infixExpression.append(" ");
+			System.out.println(t.getTypeName());
+			System.out.println("67");
+			infixExpression.append(t.getTypeName());
+			infixExpression.append(" ");
 		}
 		else {
 			throw new RuntimeException();
@@ -118,16 +126,14 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 	public void visit(ThisExpression e) {
 		System.out.println("Boo");
 		System.out.println(scopes.size());
-//		System.out.println(scopes.get(0).toString());
-//		System.out.println(scopes.get(1).toString());
-//		System.out.println(scopes.get(2).toString());
-		Scope classScope = currentScope.getScopeEnglobant().getScopeEnglobant();
+		Scope classScope = currentScope.getScopeEnglobant();
 		System.out.println(classScope.toString());
 		ClassDeclaration classDec = (ClassDeclaration)classScope.getNodeRelatedTo();
+		System.out.println(classDec.identifier.nodeToken.tokenImage);
 		System.out.println("Boo2");
 		String className = classDec.identifier.nodeToken.tokenImage;
 		System.out.println("Boo3");
-		Type classType = classScope.getTypeFromString(className);
+		Type classType = classScope.getScopeEnglobant().getTypeFromString(className);
 		System.out.println("Boo4" + classType.getTypeName());
 		
 		infixExpression.append(classType.getTypeName());
