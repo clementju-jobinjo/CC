@@ -77,7 +77,7 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 	public void visit(Identifier id) {
 		System.out.println("66");
 		Type t = null;
-		System.out.println(currentScope);
+		System.out.println(currentScope.getScopeEnglobant().getScopeEnglobant());
 	
 //		for (Scope s : scopes) {
 //			Variable var = s.getVariableNonRecursive(id.nodeToken.tokenImage);

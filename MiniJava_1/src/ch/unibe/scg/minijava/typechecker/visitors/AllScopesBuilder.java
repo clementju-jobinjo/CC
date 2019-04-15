@@ -110,7 +110,20 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 	public void visit(ClassDeclaration classDeclaration) {
 		
 		// create scope for the current class
-		Scope currentScope = new Scope(scopes.get(0), classDeclaration);
+		Scope currentScope;
+		
+		// ( "extends" Identifier() )?
+		NodeOptional nodeOptExtends = classDeclaration.nodeOptional;
+		if (nodeOptExtends.present()) {
+			NodeSequence extendsNodeSequence = (NodeSequence) nodeOptExtends.node;
+			Identifier superClassNameIdentifier = (Identifier)extendsNodeSequence.elementAt(1);
+			
+			currentScope = new Scope(classOrMethodOrVariableToScope.get(superClassNameIdentifier.nodeToken.tokenImage), classDeclaration);
+		}
+		else {
+			currentScope = new Scope(scopes.get(0), classDeclaration);
+		}
+		// create scope for the current class
 		scopes.add(currentScope);
 		scopeMethodDirectAccess = currentScope;
 		
@@ -124,7 +137,6 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		// Identifier -> class name
 		scopes.get(0).addClass(stringToType.get(className));
 
-		
 
 		//( VarDeclaration() )*
 		NodeListOptional nodeListOptional = classDeclaration.nodeListOptional;
