@@ -50,11 +50,21 @@ public class Scope {
 		}
 	}
 	
+	public Method getMethodNonRecursive(String methodName) {
+		for (Method m : methods) {
+			if (m.getIdentifier().equals(methodName)) {
+				return m;
+			}
+		}
+		return null;
+	}
+	
 	public List<Variable> getVariables() {
 		return variables;
 	}
 	
 	public Variable getVariable(String varName) {
+		System.out.println(varName);
 		for (Variable var : variables) {
 			if (var.getIdentifier().equals(varName)) {
 				System.out.println("On passe pas la");

@@ -62,6 +62,10 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 	public List<Scope> getAllScopes(){
 		return scopes;
 	}
+	
+	public Map<String, Scope> getClassOrMethodOrVariableToScope(){
+		return classOrMethodOrVariableToScope;
+	}
 
 	// Goal
 	// MainClass() ( ClassDeclaration() )* < EOF >

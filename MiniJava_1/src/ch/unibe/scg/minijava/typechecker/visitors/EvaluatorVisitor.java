@@ -2,7 +2,7 @@ package ch.unibe.scg.minijava.typechecker.visitors;
 
 import java.util.ArrayList;
 import java.util.List;
-
+import java.util.Map;
 
 import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementArrayLeft;
 import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementIdentifierLeft;
@@ -13,8 +13,10 @@ import ch.unibe.scg.javacc.syntaxtree.INode;
 import ch.unibe.scg.javacc.syntaxtree.Identifier;
 import ch.unibe.scg.javacc.syntaxtree.IfStatement;
 import ch.unibe.scg.javacc.syntaxtree.IntegerLiteral;
+import ch.unibe.scg.javacc.syntaxtree.MainClass;
 import ch.unibe.scg.javacc.syntaxtree.MethodDeclaration;
 import ch.unibe.scg.javacc.syntaxtree.NodeListOptional;
+import ch.unibe.scg.javacc.syntaxtree.NodeOptional;
 import ch.unibe.scg.javacc.syntaxtree.TrueExpression;
 import ch.unibe.scg.javacc.syntaxtree.UnaryOperator;
 import ch.unibe.scg.javacc.syntaxtree.WhileStatement;
@@ -34,11 +36,30 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	private Scope currentScope;
 	private Type typeOfLastVisitedExpression;
 	private Type typeOfLastVisitedIdentifier;
+	private Map<String, Scope> classOrMethodOrVariableToScope;
 	
-	public EvaluatorVisitor(List<Scope> scopes) {
+	public EvaluatorVisitor(List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope) {
 		this.scopes = scopes;
 		currentScope = scopes.get(0);
+		this.classOrMethodOrVariableToScope = classOrMethodOrVariableToScope;
+	}
+	
+
+	// Mainclass
+	//"class" Identifier() "{" "public" "static" "void" "main" "(" "String" "[" "]" Identifier() ")" "{" ( Statement() )? "}" "}"
+	@Override
+	public void visit(MainClass mainClass) {
+//		// Identifier()
+//		Identifier identifier = mainClass.identifier;
+//		identifier.accept(this);
 		
+
+		// (Statement())?
+		NodeOptional nodeOptional = mainClass.nodeOptional;
+			if (nodeOptional.present()) {
+				INode node = nodeOptional.node;
+				node.accept(this);
+		}
 	}
 	
 	@Override
@@ -47,13 +68,14 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 		Scope scope = getScope(md);
 		Method method = scope.getMethod(md.identifier.nodeToken.tokenImage);
 		
-		for (Scope sc : scopes) {
-			if (sc.getScopeEnglobant() == scope) {
-				currentScope = sc;
-				break;
-			}
-		}
-		
+//		for (Scope sc : scopes) {
+//			if (sc.getScopeEnglobant() == scope) {
+//				currentScope = sc;
+//				break;
+//			}
+//		}
+		currentScope = scope;
+		System.out.println("CURRENT: " + scope);
 		Type returnType = method.getReturnType();
 		
 		if (returnType == VoidType.VoidSingleton) {
@@ -134,6 +156,7 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	// Identifier() ArrayAccess() "=" Expression() ";"
 	@Override
 	public void visit(AssignmentStatementArrayLeft e){
+		System.out.println("0007");
 		e.identifier.accept(this);
 		Type typeOfId = typeOfLastVisitedIdentifier;
 		
@@ -175,24 +198,37 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 		}
 		
 		if (identifierType == null) {
+			for (Scope sc : scopes) {
+				List<Type> types = sc.getClasses();
+				for (Type t : types) {
+					if (t.getTypeName().equals(id.nodeToken.tokenImage)) {
+						identifierType = t;
+						break;
+					}
+				}
+			}
+		}
+		
+		if (identifierType == null) {
 			throw new RuntimeException();
 		}
 		
 		typeOfLastVisitedIdentifier = identifierType;
+		System.out.println("YOLO");
 	}
 	
 	@Override
 	public void visit(Expression exp) {
 		System.out.println("6");
-		ExpressionTypeConstructor visitor = new ExpressionTypeConstructor(currentScope, scopes);
+		ExpressionTypeConstructor visitor = new ExpressionTypeConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
 		exp.accept(visitor);
 		String infixExpression = visitor.getInfixExpression();
-		System.out.println(infixExpression);
+		System.out.println("Infix: " + infixExpression);
 		PostfixExpressionConstructor pf = new PostfixExpressionConstructor();
 		String postfixExpression = pf.postfix(infixExpression);
-		System.out.println(postfixExpression);
+		System.out.println("Postfix: " + postfixExpression);
 		String expTypeStr = pf.evaluatePostfix(postfixExpression);
-		System.out.println(expTypeStr);
+		System.out.println("Exp Type: " + expTypeStr);
 		Type expType = null;
 		
 		for (Scope sc : scopes) {
