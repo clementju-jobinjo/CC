@@ -13,28 +13,33 @@ import ch.unibe.scg.javacc.syntaxtree.MainClass;
 import ch.unibe.scg.javacc.syntaxtree.NodeListOptional;
 import ch.unibe.scg.javacc.syntaxtree.NodeOptional;
 import ch.unibe.scg.javacc.syntaxtree.NodeSequence;
-import ch.unibe.scg.javacc.syntaxtree.NodeToken;
 import ch.unibe.scg.javacc.visitor.DepthFirstVoidVisitor;
 import ch.unibe.scg.minijava.typechecker.types.RootObject;
 
+
+// visitor whose role is to create a hierarchy within the declared types 
 public class AllTypesVisitor extends DepthFirstVoidVisitor {
 
 	List<String> classNames;
 	Map<String, String> inheritances;
 
+	
 	public AllTypesVisitor() {
 		super();
 		classNames = new ArrayList<String>();
 		inheritances = new HashMap<String, String>();
 	}
 
+	
 	public List<String> getClassNames(){
 		return classNames;
 	}
 
+	
 	public Map<String, String> getInheritances(){
 		return inheritances;
 	}
+	
 
 	// Goal
 	// MainClass() ( ClassDeclaration() )* < EOF >
@@ -65,8 +70,7 @@ public class AllTypesVisitor extends DepthFirstVoidVisitor {
 		Identifier identifier = mainClass.identifier;
 		
 		// main class extends from object
-		inheritances.put(identifier.nodeToken.tokenImage, RootObject.RootObjectSingleton.getTypeName());
-			
+		inheritances.put(identifier.nodeToken.tokenImage, RootObject.RootObjectSingleton.getTypeName());	
 	}
 
 

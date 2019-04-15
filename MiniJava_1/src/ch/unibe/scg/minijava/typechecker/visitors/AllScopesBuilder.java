@@ -5,35 +5,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ch.unibe.scg.javacc.syntaxtree.ArrayAccess;
-import ch.unibe.scg.javacc.syntaxtree.ArrayCall;
-import ch.unibe.scg.javacc.syntaxtree.BinaryOperator;
-import ch.unibe.scg.javacc.syntaxtree.BlockStatement;
-import ch.unibe.scg.javacc.syntaxtree.BooleanType;
 import ch.unibe.scg.javacc.syntaxtree.ClassDeclaration;
-import ch.unibe.scg.javacc.syntaxtree.DotArrayLength;
-import ch.unibe.scg.javacc.syntaxtree.DotFunctionCall;
 import ch.unibe.scg.javacc.syntaxtree.Goal;
 import ch.unibe.scg.javacc.syntaxtree.INode;
 import ch.unibe.scg.javacc.syntaxtree.Identifier;
-import ch.unibe.scg.javacc.syntaxtree.IfStatement;
-import ch.unibe.scg.javacc.syntaxtree.IntArrayConstructionCall;
-import ch.unibe.scg.javacc.syntaxtree.IntArrayDeclaration;
-import ch.unibe.scg.javacc.syntaxtree.IntegerLiteral;
 import ch.unibe.scg.javacc.syntaxtree.MainClass;
 import ch.unibe.scg.javacc.syntaxtree.MethodDeclaration;
-import ch.unibe.scg.javacc.syntaxtree.NewExpression;
 import ch.unibe.scg.javacc.syntaxtree.NodeListOptional;
 import ch.unibe.scg.javacc.syntaxtree.NodeOptional;
 import ch.unibe.scg.javacc.syntaxtree.NodeSequence;
-import ch.unibe.scg.javacc.syntaxtree.NodeToken;
-import ch.unibe.scg.javacc.syntaxtree.ObjectConstructionCall;
-import ch.unibe.scg.javacc.syntaxtree.ParenthesisExpression;
-import ch.unibe.scg.javacc.syntaxtree.PrintStatement;
-import ch.unibe.scg.javacc.syntaxtree.UnaryExpression;
-import ch.unibe.scg.javacc.syntaxtree.UnaryOperator;
 import ch.unibe.scg.javacc.syntaxtree.VarDeclaration;
-import ch.unibe.scg.javacc.syntaxtree.WhileStatement;
 import ch.unibe.scg.javacc.visitor.DepthFirstVoidVisitor;
 import ch.unibe.scg.minijava.typechecker.scopes.Scope;
 import ch.unibe.scg.minijava.typechecker.types.Int;
@@ -44,6 +25,8 @@ import ch.unibe.scg.minijava.typechecker.types.Variable;
 import ch.unibe.scg.minijava.typechecker.types.VoidType;
 import ch.unibe.scg.minijava.typechecker.types.Boolean;
 
+
+// visitor whose role is to build all scopes (classes, methods and variables)
 public class AllScopesBuilder extends DepthFirstVoidVisitor {
 
 	private List<Scope> scopes;
@@ -61,14 +44,17 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		scopeMethodDirectAccess = globalScope;
 	}
 	
+	
 	public List<Scope> getAllScopes(){
 		return scopes;
 	}
+	
 	
 	public Map<String, Scope> getClassOrMethodOrVariableToScope(){
 		return classOrMethodOrVariableToScope;
 	}
 
+	
 	// Goal
 	// MainClass() ( ClassDeclaration() )* < EOF >
 	@Override
@@ -153,8 +139,6 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 				//classOrMethodOrVariableToScope.put(varName, currentScope);			
 				
 			}
-
-
 		}
 
 		// ( MethodDeclaration() )*
@@ -163,58 +147,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 
 			for (int i = 0; i < nodeListOptional1.size(); i++) {
 				MethodDeclaration node = (MethodDeclaration)nodeListOptional1.elementAt(i);
-				
 				node.accept(this);
-//				// name
-//				String methodName = node.identifier.nodeToken.tokenImage;
-//				
-//				// return type
-//				node.type.accept(this);
-//				Type returnType = currentType;
-//				
-//				// arguments
-//				List<Variable> args = new ArrayList<Variable>();
-//				
-//				NodeOptional nodeOptional = node.nodeOptional;
-//				if (nodeOptional.present()) {
-//					NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
-//					
-//					// First argument
-//					// "Type" first arg
-//					INode nodeType = nodeSequence.elementAt(0);
-//					nodeType.accept(this);
-//					
-//					// Identifier first arg
-//					Identifier nodeIdentifier = (Identifier)nodeSequence.elementAt(1);
-//					
-//					args.add(new Variable(nodeIdentifier.nodeToken.tokenImage, currentType));
-//					
-//					
-//					
-//					//  ("," Type() Identifier() )*
-//					NodeListOptional nodeListOptional2 = (NodeListOptional) nodeSequence.elementAt(2);
-//					if (nodeListOptional2.present()) {
-//						for (int j = 0; j < nodeListOptional2.size(); j++) {
-//							INode node2 = nodeListOptional2.elementAt(j);
-//							NodeSequence nodeSequence2 = (NodeSequence) node2;
-//							
-//							// Type arg i+1
-//							INode type2 = nodeSequence2.elementAt(1);
-//							type2.accept(this);
-//
-//							// Identifier arg i+1
-//							Identifier identifier2 = (Identifier)nodeSequence2.elementAt(2);
-//							
-//							args.add(new Variable(identifier2.nodeToken.tokenImage, currentType));
-//
-//						}
-//					}
-//				}
-//				
-//				currentScope.addMethod(new Method(methodName, returnType, args));
-//				classOrMethodOrVariableToScope.put(methodName, currentScope);
-//				
-//				node.accept(this);
 			}
 
 		}
@@ -226,7 +159,6 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(VarDeclaration varDeclaration) {
 		varDeclaration.type.accept(this);
-		
 		scopes.get(0).addVariable(new Variable(varDeclaration.identifier.nodeToken.tokenImage, currentType));
 	}
 
@@ -247,9 +179,6 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		// Identifier()
 		String methodName = methodDeclaration.identifier.nodeToken.tokenImage;
 		
-//		// find scope of method
-//		Scope parentScope = classOrMethodOrVariableToScope.get(methodName);
-//		
 			
 		// arguments
 		List<Variable> args = new ArrayList<Variable>();
@@ -267,7 +196,6 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 			Identifier nodeIdentifier = (Identifier)nodeSequence.elementAt(1);
 			
 			args.add(new Variable(nodeIdentifier.nodeToken.tokenImage, currentType));
-			
 			
 			
 			//  ("," Type() Identifier() )*
@@ -290,25 +218,19 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 			}
 		}
 		
-		// add method to global scope
+		// add method to parent scope's method list
 		scopeMethodDirectAccess.addMethod(new Method(methodName, returnType, args));
+		
+		// link method with its internal scope
 		classOrMethodOrVariableToScope.put(methodName, internalMethodScope);
 			
-//
-//		
-//		// create internal method scope
-//		Scope currentScope = new Scope(classOrMethodOrVariableToScope.get(methodName), methodDeclaration);
 		scopes.add(internalMethodScope);
-//		classOrMethodOrVariableToScope.put(methodName, currentScope);
-//		
-//		List<Variable> arguments = classOrMethodOrVariableToScope.get(methodName).getMethod(methodName).getArguments();
-//		
-//		
+	
 		for (Variable arg : args) {
 			internalMethodScope.addVariable(arg);
 		}
-//
-//		
+
+		
 		// ( LOOKAHEAD(2) VarDeclaration() )*
 		NodeListOptional nodeListOptional = methodDeclaration.nodeListOptional;
 		if (nodeListOptional.present()) {
@@ -347,11 +269,11 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 				
 				// if type was not declared
 				if (currentType == null) {
-					throw new RuntimeException();
+					throw new RuntimeException("Type '" + id.nodeToken.tokenImage + "' is unknown.");
 				}
 				break;
 			default:
-				throw new RuntimeException();
+				throw new RuntimeException("Type exception");
 		}
 	}
 

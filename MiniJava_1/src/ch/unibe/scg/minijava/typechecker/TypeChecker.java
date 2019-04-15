@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import ch.unibe.scg.javacc.syntaxtree.INode;
 import ch.unibe.scg.minijava.typechecker.scopes.*;
@@ -23,7 +22,7 @@ import ch.unibe.scg.minijava.typechecker.visitors.EvaluatorVisitor;
 /**
  * Change at will.
  * 
- * @author kursjan
+ * @author Julien Clement & Johan Jobin
  *
  */
 public class TypeChecker {
@@ -40,20 +39,18 @@ public class TypeChecker {
 			// create all scopes
 			List<Scope> allScopes = createAllScopes(n, stringToTypes);
 			
-//			for (Scope s : allScopes) {
-//				System.out.println(s.toString());
-//			}
-			
+			// evaluate the node
 			evaluate(n, allScopes);
 			
 			return true;
+			
 		} catch (RuntimeException e) {
 			return false;
 		}
 	}
 	
+	
 	private Map<String, Type> createAllTypes(INode n) {
-		
 		// build inheritance table
 		AllTypesVisitor visitor = new AllTypesVisitor();
 		n.accept(visitor);
@@ -75,6 +72,7 @@ public class TypeChecker {
 		globalScope.addClass(Int.IntSingleton);
 		globalScope.addClass(new IntArray());
 		
+		// build scopes
 		AllScopesBuilder visitor = new AllScopesBuilder(globalScope, stringToType);
 		n.accept(visitor);
 		List<Scope> allScopes = visitor.getAllScopes();
@@ -84,6 +82,8 @@ public class TypeChecker {
 	}
 	
 	private Map<String, Type> createClassObjects(Map<String, String> inheritances){
+		
+		// create Type objects from the given class hierarchy
 		
 		List<String> classNamesToRemove = new ArrayList<String>();
 		List<String> classNames = new ArrayList<String>(inheritances.keySet());
@@ -117,10 +117,10 @@ public class TypeChecker {
 		return stringToType;
 	}
 	
+	
 	private void evaluate(INode node, List<Scope> scopes) {
 		EvaluatorVisitor visitor = new EvaluatorVisitor(scopes, classOrMethodOrVariableToScope);
 		node.accept(visitor);
-//		System.out.println(visitor.getTypeOfLastExpression().getTypeName());
 	}
 
 }

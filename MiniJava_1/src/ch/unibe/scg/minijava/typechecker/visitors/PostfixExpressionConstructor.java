@@ -12,12 +12,16 @@ public class PostfixExpressionConstructor {
 	public PostfixExpressionConstructor() {
 		precedence = "&&><!+-*/";
 	}
-	
 
+	
+	// check precedence between two operators 
     private boolean hasHigherPrecedence(String operator1, String operator2) {
     	return (precedence.indexOf(operator2) >= precedence.indexOf(operator1));
     }
-
+    
+    
+    // returns the corresponding postfix expression (reverse polish notation) corresponding to the given infix expression
+    // algorithm adapted from https://eddmann.com/posts/shunting-yard-implementation-in-java/
     public String postfix(String infixExpression) {
         StringBuilder postfixExpression = new StringBuilder();
         Deque<String> stack  = new LinkedList<>();
@@ -29,20 +33,20 @@ public class PostfixExpressionConstructor {
                 	postfixExpression.append(stack.pop()).append(' ');
                 }
                 stack.push(token);
-
+            } 
             // left parenthesis
-            } else if (token.equals("(")) {
+            else if (token.equals("(")) {
                 stack.push(token);
-
+            }
             // right parenthesis
-            } else if (token.equals(")")) {
+            else if (token.equals(")")) {
                 while ( ! stack.peek().equals("(")) {
                 	postfixExpression.append(stack.pop()).append(' ');
                 }
                 stack.pop();
-
+            } 
             // digit
-            } else {
+            else {
             	postfixExpression.append(token).append(' ');
             }
         }
@@ -54,6 +58,7 @@ public class PostfixExpressionConstructor {
         return postfixExpression.toString();
     }
     
+    // returns the resulting type (String) of an expression
     public String evaluatePostfix(String postfixExpression) {
     	
     	String[] tokens = postfixExpression.trim().split("\\s+");
@@ -76,7 +81,7 @@ public class PostfixExpressionConstructor {
     						stack.push(Boolean.BooleanSingleton.getTypeName());
     					}
     					else {
-    						throw new RuntimeException();
+    						throw new RuntimeException("Trying to apply a negation on a non boolean.");
     					}
     					break;
     				
@@ -87,7 +92,7 @@ public class PostfixExpressionConstructor {
     						stack.push(Boolean.BooleanSingleton.getTypeName());
     					}
     					else {
-    						throw new RuntimeException();
+    						throw new RuntimeException("&& operator can only be applied to two booleans.");
     					}
     					break;
     				
@@ -98,7 +103,7 @@ public class PostfixExpressionConstructor {
     						stack.push(Boolean.BooleanSingleton.getTypeName());
     					}
     					else {
-    						throw new RuntimeException();
+    						throw new RuntimeException("Comparison only possible between two integers.");
     					}
     					break;
     					
@@ -109,7 +114,7 @@ public class PostfixExpressionConstructor {
     						stack.push(Int.IntSingleton.getTypeName());
     					}
     					else {
-    						throw new RuntimeException();
+    						throw new RuntimeException("Comparison only possible between two integers.");
     					}
     					break;
     					
@@ -120,7 +125,7 @@ public class PostfixExpressionConstructor {
     						stack.push(Int.IntSingleton.getTypeName());
     					}
     					else {
-    						throw new RuntimeException();
+    						throw new RuntimeException("Addition only possible between two integers.");
     					}
     					break;
     				
@@ -131,7 +136,7 @@ public class PostfixExpressionConstructor {
     						stack.push(Int.IntSingleton.getTypeName());
     					}
     					else {
-    						throw new RuntimeException();
+    						throw new RuntimeException("Substraction only possible between two integers.");
     					}
     					break;
     				
@@ -142,7 +147,7 @@ public class PostfixExpressionConstructor {
     						stack.push(Int.IntSingleton.getTypeName());
     					}
     					else {
-    						throw new RuntimeException();
+    						throw new RuntimeException("Multiplication only possible between two integers.");
     					}
     					break;
     					
@@ -153,7 +158,7 @@ public class PostfixExpressionConstructor {
     						stack.push(Int.IntSingleton.getTypeName());
     					}
     					else {
-    						throw new RuntimeException();
+    						throw new RuntimeException("Division only possible between two integers.");
     					}
     					break;
     					
@@ -166,7 +171,7 @@ public class PostfixExpressionConstructor {
     	String resultingType = stack.pop();
     	
     	if (!stack.isEmpty()) {
-    		throw new RuntimeException();
+    		throw new RuntimeException("Expression error. Verify your expression.");
     	}
     	
     	return resultingType;

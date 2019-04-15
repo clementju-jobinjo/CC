@@ -14,8 +14,6 @@ import ch.unibe.scg.javacc.syntaxtree.INode;
 import ch.unibe.scg.javacc.syntaxtree.Identifier;
 import ch.unibe.scg.javacc.syntaxtree.IntArrayConstructionCall;
 import ch.unibe.scg.javacc.syntaxtree.IntegerLiteral;
-import ch.unibe.scg.javacc.syntaxtree.MethodDeclaration;
-import ch.unibe.scg.javacc.syntaxtree.NewExpression;
 import ch.unibe.scg.javacc.syntaxtree.NodeListOptional;
 import ch.unibe.scg.javacc.syntaxtree.NodeOptional;
 import ch.unibe.scg.javacc.syntaxtree.NodeSequence;
@@ -23,9 +21,7 @@ import ch.unibe.scg.javacc.syntaxtree.ObjectConstructionCall;
 import ch.unibe.scg.javacc.syntaxtree.ParenthesisExpression;
 import ch.unibe.scg.javacc.syntaxtree.ThisExpression;
 import ch.unibe.scg.javacc.syntaxtree.TrueExpression;
-import ch.unibe.scg.javacc.syntaxtree.UnaryExpression;
 import ch.unibe.scg.javacc.syntaxtree.UnaryOperator;
-import ch.unibe.scg.javacc.syntaxtree.VarDeclaration;
 import ch.unibe.scg.javacc.visitor.DepthFirstVoidVisitor;
 import ch.unibe.scg.minijava.typechecker.types.Int;
 import ch.unibe.scg.minijava.typechecker.types.IntArray;
@@ -49,15 +45,16 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 		this.classOrMethodOrVariableToScope = classOrMethodOrVariableToScope;
 	}
 	
+	
 	public String getInfixExpression() {
 		return infixExpression.toString();
 	}
 	
+	
 	@Override
 	public void visit(ObjectConstructionCall e) {
-		System.out.println("55");
 		Type type = null;
-//		Type t = currentScope.getVariable(e.identifier.nodeToken.tokenImage).getType();
+		
 		for (Scope s : scopes) {
 			Type t = s.getTypeFromString(e.identifier.nodeToken.tokenImage);
 			if (t != null) {
@@ -66,48 +63,35 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 			}
 		}
 		if (type == null) {
-			throw new RuntimeException();
+			throw new RuntimeException("Unknown type.");
 		}
 		
 		infixExpression.append(type.getTypeName());
 		infixExpression.append(" ");
 	}
 	
+	
 	@Override
 	public void visit(Identifier id) {
-		System.out.println("66");
-		Type t = null;
-		System.out.println(currentScope.getScopeEnglobant().getScopeEnglobant());
-	
-//		for (Scope s : scopes) {
-//			Variable var = s.getVariableNonRecursive(id.nodeToken.tokenImage);
-//			if (var != null) {
-//				t =  var.getType();
-//				break;
-//			}
-//		}
 		
 		Variable var = currentScope.getVariable(id.nodeToken.tokenImage);
-		
-		t = var.getType();
-		
-		
+		Type t = var.getType();
 		
 		if(t != null) {
-			System.out.println(t.getTypeName());
-			System.out.println("67");
 			infixExpression.append(t.getTypeName());
 			infixExpression.append(" ");
 		}
 		else {
-			throw new RuntimeException();
+			throw new RuntimeException("Unknown identifier type.");
 		}
 	}
+	
 	
 	@Override
 	public void visit(UnaryOperator e) {
 		infixExpression.append("! ");
 	}
+	
 	
 	@Override
 	public void visit(ParenthesisExpression e) {
@@ -116,16 +100,17 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 		infixExpression.append(") ");
 	}
 	
+	
 	@Override
 	public void visit(IntegerLiteral e) {
 		infixExpression.append(Int.IntSingleton.getTypeName());
 		infixExpression.append(" ");
 	}
 	
+	
 	@Override
 	public void visit(ThisExpression e) {
-		System.out.println("Boo");
-		System.out.println(scopes.size());
+		
 		Scope classScope = currentScope.getScopeEnglobant();
 
 		ClassDeclaration classDec = (ClassDeclaration)classScope.getNodeRelatedTo();
@@ -138,17 +123,20 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 		infixExpression.append(" ");
 	}
 	
+	
 	@Override
 	public void visit(TrueExpression e) {
 		infixExpression.append(Boolean.BooleanSingleton.getTypeName());
 		infixExpression.append(" ");
 	}
 	
+	
 	@Override
 	public void visit(FalseExpression e) {
 		infixExpression.append(Boolean.BooleanSingleton.getTypeName());
 		infixExpression.append(" ");
 	}
+	
 	
 	@Override
 	public void visit(BinaryOperator e) {
@@ -159,26 +147,26 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 	
 	@Override
 	public void visit(IntArrayConstructionCall e) {
-		System.out.println("INTARRAY");
+
 		ExpressionTypeConstructor vis = new ExpressionTypeConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
 		e.expression.accept(vis);
 		String intraBracketType = vis.getInfixExpression();
 		
 		PostfixExpressionConstructor pf = new PostfixExpressionConstructor();
 		String postfixExpression = pf.postfix(intraBracketType);
-		System.out.println(postfixExpression);
+
 		String expTypeStr = pf.evaluatePostfix(postfixExpression);
-		
 		
 		if (expTypeStr.equals(Int.IntSingleton.getTypeName())) {
 			infixExpression.append(IntArray.IntArraySingleton.getTypeName());
 			infixExpression.append(" ");
 		}
 		else {
-			throw new RuntimeException();
+			throw new RuntimeException("The size of the created array must be an integer.");
 		}
 		
 	}
+	
 	
 	@Override
 	public void visit(ArrayCall e) {
@@ -189,9 +177,10 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 			infixExpression.append(" ");
 		}
 		else {
-			throw new RuntimeException();
+			throw new RuntimeException("Trying to access a field of a non int array object.");
 		}
 	}
+	
 	
 	@Override
 	public void visit(DotArrayLength e) {
@@ -202,51 +191,32 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 			infixExpression.append(" ");
 		}
 		else {
-			throw new RuntimeException();
+			throw new RuntimeException("Trying to get the length of an non int array object.");
 		}
 	}
 	
+	
 	@Override
 	public void visit(DotFunctionCall e) {
-		System.out.println("DOT FUNCTION CALL");
+
 		String[] tokens = infixExpression.toString().trim().split("\\s+");
 		String thisType = tokens[tokens.length-1];
-		
-//		System.out.println("TYPE " + thisType);
 		
 		String functionName = e.identifier.nodeToken.tokenImage;
 		
 		// scope of thisType class
 		Scope thisScope = classOrMethodOrVariableToScope.get(thisType);
-		System.out.println(thisScope);
 		
 		Method method = thisScope.getMethod(functionName);
 		
 		if (method == null) {
-			throw new RuntimeException();
+			throw new RuntimeException("Trying to call a non-existing method.");
 		}
 		
 		
-//		// get method object
-//		Method method = null;
-//		for (Scope s : scopes) {
-//			Method m = s.getMethodNonRecursive(functionName);
-//			if (m != null) {
-//				method = m;
-//				break;
-//			}
-//		}
-		
-		System.out.println("METHOD" + method.getIdentifier());
-		
-		
-		// get internal class scope of this
-		
-		
-		
+		// arguments
 		List<Variable> methodArguments = method.getArguments();
 		
-		// arguments
 		// (Expression (xxx)*)?
 		List<Type> argsType = new ArrayList<Type>();
 		
@@ -276,13 +246,13 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 		
 		// same length -> args list
 		if (argsType.size() != methodArguments.size()) {
-			throw new RuntimeException();
+			throw new RuntimeException("Function call does not have the right number of arguments.");
 		}
 		
 		// same argument types
 		for (int i = 0; i < argsType.size(); i++) {
 			if (argsType.get(i) != methodArguments.get(i).getType()) {
-				throw new RuntimeException();
+				throw new RuntimeException("Wrong arguments.");
 			}
 		}
 		

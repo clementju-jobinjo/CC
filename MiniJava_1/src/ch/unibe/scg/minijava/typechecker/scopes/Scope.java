@@ -8,6 +8,11 @@ import ch.unibe.scg.minijava.typechecker.types.Variable;
 import ch.unibe.scg.javacc.syntaxtree.INode;
 import ch.unibe.scg.minijava.typechecker.types.*;
 
+/**
+ * 
+ * Represents a global scope, method internal scope or class internal scope
+ *
+ */
 public class Scope {
 	
 	private Scope scopeEnglobant;
@@ -15,6 +20,7 @@ public class Scope {
 	private List<Method> methods;
 	private List<Variable> variables;
 	private INode nodeRelatedTo;
+	
 	
 	public Scope(Scope scopeEnglobant, INode nodeRelatedTo) {
 		this.scopeEnglobant = scopeEnglobant;
@@ -24,17 +30,22 @@ public class Scope {
 		this.nodeRelatedTo = nodeRelatedTo;
 	}
 	
+	
+	// get methods
 	public Scope getScopeEnglobant() {
 		return scopeEnglobant;
 	}
+	
 	
 	public List<Type> getClasses() {
 		return classes;
 	}
 	
+	
 	public List<Method> getMethods() {
 		return methods;
 	}
+	
 	
 	public Method getMethod(String methodName) {
 		for (Method m : methods) {
@@ -43,12 +54,13 @@ public class Scope {
 			}
 		}
 		if (scopeEnglobant == null) {
-			throw new RuntimeException();
+			throw new RuntimeException("Method does not exist in the current scope or in any parent/child scope");
 		}
 		else {
 			return scopeEnglobant.getMethod(methodName);
 		}
 	}
+	
 	
 	public Method getMethodNonRecursive(String methodName) {
 		for (Method m : methods) {
@@ -59,32 +71,28 @@ public class Scope {
 		return null;
 	}
 	
+	
 	public List<Variable> getVariables() {
 		return variables;
 	}
 	
+	
 	public Variable getVariable(String varName) {
-		System.out.println("Yooo"+ variables.size());
-		
 		if(variables != null) {
 			for (Variable var : variables){
-				System.out.println("VAR" + var.getIdentifier());
 				if (var.getIdentifier().equals(varName)) {
-					System.out.println("On passe pas la");
 					return var;
 				}
 			}	
 		}
-		System.out.println("Scope englobant");
 		if (scopeEnglobant != null) {
-			System.out.println("ON passe ici");
 			return this.scopeEnglobant.getVariable(varName);
 		}
 		else {
-			System.out.println("ici");
-			throw new RuntimeException();
+			throw new RuntimeException("Variable does not exist in that scope or in any parent/child scope");
 		}
 	}
+	
 	
 	public Variable getVariableNonRecursive(String varName) {
 		for (Variable var : variables) {
@@ -95,13 +103,14 @@ public class Scope {
 		return null;
 	}
 	
+	
 	public INode getNodeRelatedTo() {
 		return nodeRelatedTo;
 	}
 	
+	
 	public Type getTypeFromString(String str) {
 		for (Type t : classes) {
-			System.out.println(" >>> " + t.getTypeName());
 			if (str.equals(t.getTypeName())) {
 				return t;
 			}
@@ -110,19 +119,23 @@ public class Scope {
 		return null;
 	}
 	
+	
+	// set and add methods
 	public void setScopeEnglobant(Scope sc) {
 		this.scopeEnglobant = sc;
 	}
 	
+	
 	public void addClass(Type cl) {
 		for (Type cla : classes) {
 			if (cla.getTypeName().equals(cl.getTypeName())) {
-				throw new RuntimeException();
+				throw new RuntimeException("The scope already contains a class called " + cl.getTypeName());
 			}
 		}
 		
 		classes.add(cl);
 	}
+	
 	
 	public void addMethod(Method met) {
 		
@@ -134,7 +147,6 @@ public class Scope {
 			List<Variable> mArguments = m.getArguments();
 			boolean sameArguments = true;
 			
-			
 			// check if the list of arguments is exactly the same
 			for (int i = 0; i < metArguments.size(); i++) {
 				if (! metArguments.get(i).getIdentifier().equals(mArguments.get(i).getIdentifier())) {
@@ -145,7 +157,7 @@ public class Scope {
 			
 			// exact same definition same parameters, different return types
 			if (sameArguments && metIdentifier.equals(mIdentifier)) {
-				throw new RuntimeException();
+				throw new RuntimeException("Cannot add two methods with the same name and parameters to the same scope. Method: " + metIdentifier);
 			}
 			
 		}
@@ -157,16 +169,9 @@ public class Scope {
 	
 	public void addVariable(Variable var) {
 		int index = -1;
-//		for (Variable variable : variables) {
-//			if (variable.getIdentifier().equals(var.getIdentifier())) {
-//				//throw new RuntimeException();
-//				contains = variable.;
-//				break;
-//			}
-//		}
+
 		for (int i = 0; i < variables.size(); i++) {
 			if (variables.get(i).getIdentifier().equals(var.getIdentifier())) {
-				//throw new RuntimeException();
 				index = i;
 				break;
 			}
@@ -182,6 +187,7 @@ public class Scope {
 		
 	}
 	
+	// redefinition of toString
 	@Override
 	public String toString() {
 		List<Variable> vars = this.getVariables();
