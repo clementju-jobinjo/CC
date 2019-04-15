@@ -116,13 +116,23 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 	
 	@Override
 	public void visit(ThisExpression e) {
-		Scope classScope = currentScope.getScopeEnglobant();
+		System.out.println("Boo");
+		System.out.println(scopes.size());
+//		System.out.println(scopes.get(0).toString());
+//		System.out.println(scopes.get(1).toString());
+//		System.out.println(scopes.get(2).toString());
+		Scope classScope = currentScope.getScopeEnglobant().getScopeEnglobant();
+		System.out.println(classScope.toString());
 		ClassDeclaration classDec = (ClassDeclaration)classScope.getNodeRelatedTo();
+		System.out.println("Boo2");
 		String className = classDec.identifier.nodeToken.tokenImage;
+		System.out.println("Boo3");
 		Type classType = classScope.getTypeFromString(className);
+		System.out.println("Boo4" + classType.getTypeName());
 		
 		infixExpression.append(classType.getTypeName());
 		infixExpression.append(" ");
+		System.out.println("Boo5");
 	}
 	
 	@Override
