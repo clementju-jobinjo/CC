@@ -64,18 +64,24 @@ public class Scope {
 	}
 	
 	public Variable getVariable(String varName) {
-		System.out.println(varName);
-		for (Variable var : variables) {
-			if (var.getIdentifier().equals(varName)) {
-				System.out.println("On passe pas la");
-				return var;
-			}
+		System.out.println("Yooo"+ variables.size());
+		
+		if(variables != null) {
+			for (Variable var : variables){
+				System.out.println("VAR" + var.getIdentifier());
+				if (var.getIdentifier().equals(varName)) {
+					System.out.println("On passe pas la");
+					return var;
+				}
+			}	
 		}
+		System.out.println("Scope englobant");
 		if (scopeEnglobant != null) {
 			System.out.println("ON passe ici");
 			return this.scopeEnglobant.getVariable(varName);
 		}
 		else {
+			System.out.println("ici");
 			throw new RuntimeException();
 		}
 	}
