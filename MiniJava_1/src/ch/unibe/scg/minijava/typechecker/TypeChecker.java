@@ -122,5 +122,10 @@ public class TypeChecker {
 		EvaluatorVisitor visitor = new EvaluatorVisitor(scopes, classOrMethodOrVariableToScope);
 		node.accept(visitor);
 	}
+	
+	
+	public Map<String, Scope> getClassOrMethodOrVariableToScope() {
+		return getClassOrMethodOrVariableToScope();
+	}
 
 }

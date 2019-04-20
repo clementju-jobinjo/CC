@@ -7,4 +7,9 @@ public class RootObject extends Type {
 	public RootObject() {
 		super("Object", null);
 	}
+	
+	@Override
+	public org.apache.bcel.generic.Type getBcelType() {
+		return org.apache.bcel.generic.Type.OBJECT;
+	}
 }

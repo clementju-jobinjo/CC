@@ -7,4 +7,9 @@ public class VoidType extends Type{
 	public VoidType() {
 		super("void", null);
 	}
+	
+	@Override
+	public org.apache.bcel.generic.Type getBcelType() {
+		return org.apache.bcel.generic.Type.VOID;
+	}
 }

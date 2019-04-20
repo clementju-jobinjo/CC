@@ -7,5 +7,10 @@ public class Boolean extends Type {
 	public Boolean() {
 		super("boolean", null);
 	}
+	
+	@Override
+	public org.apache.bcel.generic.Type getBcelType() {
+		return org.apache.bcel.generic.Type.BOOLEAN;
+	}
 
 }

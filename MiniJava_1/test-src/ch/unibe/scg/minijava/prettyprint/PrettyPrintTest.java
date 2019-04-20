@@ -12,15 +12,9 @@ import org.junit.Test;
 import ch.unibe.scg.javacc.MiniJavaImpl;
 import ch.unibe.scg.javacc.ParseException;
 import ch.unibe.scg.minijava.MiniJava;
+import ch.unibe.scg.minijava.SyntaxTest;
 import ch.unibe.scg.minijava.prettyprint.PrettyPrinter;
 
-/**
- * Do not change this class, please! If you think, there is something wrong with
- * these tests, send me an email to cc-staff@iam.unibe.ch
- * 
- * @author kursjan
- *
- */
 public class PrettyPrintTest {
 	@Test
 	public void testIdentifier() throws ParseException {
@@ -452,7 +446,6 @@ public class PrettyPrintTest {
 			MiniJava parser = new MiniJavaImpl(getStream(str));
 			Object node = parser.getClass().getMethod(method).invoke(parser);
 			PrettyPrinter prettyPrinter = new PrettyPrinter();
-			// And pretty print on object as well with cast in the prettyPrint method?
 			String result = prettyPrinter.prettyPrint(node);
 			return result;
 		} catch (Throwable t) {
@@ -467,4 +460,7 @@ public class PrettyPrintTest {
 
 	}
 
+	private InputStream loadFile(String name) {
+		return SyntaxTest.class.getResourceAsStream(name);
+	}
 }

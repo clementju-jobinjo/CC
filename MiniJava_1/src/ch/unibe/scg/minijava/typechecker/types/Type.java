@@ -32,4 +32,8 @@ public class Type {
 			}
 		}
 	}
+	
+	public org.apache.bcel.generic.Type getBcelType() {
+		return org.apache.bcel.generic.Type.UNKNOWN;
+	};
 }

@@ -11,12 +11,8 @@ import org.junit.Test;
 
 import ch.unibe.scg.javacc.MiniJavaImpl;
 import ch.unibe.scg.javacc.ParseException;
+import ch.unibe.scg.minijava.MiniJava;
 
-/**
- *
- * @author kursjan
- *
- */
 public class SyntaxTest {
 
 	@Test
@@ -475,44 +471,8 @@ public class SyntaxTest {
 	}
 
 	@Test
-	public void testProgram4() throws ParseException {
-		InputStream str = loadFile("programs/BinarySearch.minijava");
-		MiniJava parser = parserFor(str);
-
-		parser.Goal();
-		assertTrue(true);
-	}
-
-	@Test
-	public void testProgram5() throws ParseException {
-		InputStream str = loadFile("programs/BubbleSort.minijava");
-		MiniJava parser = parserFor(str);
-
-		parser.Goal();
-		assertTrue(true);
-	}
-
-	@Test
-	public void testProgram6() throws ParseException {
-		InputStream str = loadFile("programs/Factorial.minijava");
-		MiniJava parser = parserFor(str);
-
-		parser.Goal();
-		assertTrue(true);
-	}
-
-	@Test
-	public void testProgram7() throws ParseException {
+	public void testFibonacci() throws ParseException {
 		InputStream str = loadFile("programs/Fibonacci.minijava");
-		MiniJava parser = parserFor(str);
-
-		parser.Goal();
-		assertTrue(true);
-	}
-
-	@Test
-	public void testProgram8() throws ParseException {
-		InputStream str = loadFile("programs/Scaling.minijava");
 		MiniJava parser = parserFor(str);
 
 		parser.Goal();
