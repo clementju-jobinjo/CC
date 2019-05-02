@@ -28,6 +28,7 @@ import ch.unibe.scg.minijava.typechecker.visitors.EvaluatorVisitor;
 public class TypeChecker {
 	
 	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private List<Scope> scopes;
 
 	public boolean check(Object node) {
 		INode n = (INode) node;
@@ -38,6 +39,7 @@ public class TypeChecker {
 			
 			// create all scopes
 			List<Scope> allScopes = createAllScopes(n, stringToTypes);
+			scopes = allScopes;
 			
 			// evaluate the node
 			evaluate(n, allScopes);
@@ -125,7 +127,11 @@ public class TypeChecker {
 	
 	
 	public Map<String, Scope> getClassOrMethodOrVariableToScope() {
-		return getClassOrMethodOrVariableToScope();
+		return classOrMethodOrVariableToScope;
+	}
+	
+	public List<Scope> getScopes() {
+		return scopes;
 	}
 
 }

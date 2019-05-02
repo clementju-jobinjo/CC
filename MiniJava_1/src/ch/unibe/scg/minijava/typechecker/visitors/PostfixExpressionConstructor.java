@@ -10,7 +10,7 @@ public class PostfixExpressionConstructor {
 	private String precedence;
 	
 	public PostfixExpressionConstructor() {
-		precedence = "&&><!+-*/";
+		precedence = "==&&><!+-*/";
 	}
 
 	
@@ -160,6 +160,133 @@ public class PostfixExpressionConstructor {
     					else {
     						throw new RuntimeException("Division only possible between two integers.");
     					}
+    					break;
+    					
+    				default:
+    					throw new RuntimeException();
+    			}
+    		}
+    	}
+    	
+    	String resultingType = stack.pop();
+    	
+    	if (!stack.isEmpty()) {
+    		throw new RuntimeException("Expression error. Verify your expression.");
+    	}
+    	
+    	return resultingType;
+    }
+    
+ // returns the resulting type (String) of an expression
+    public String evaluatePostfixValue(String postfixExpression) {
+    	
+    	String[] tokens = postfixExpression.trim().split("\\s+");
+    	Deque<String> stack  = new LinkedList<>();
+    	
+    	 	
+    	for (String token : tokens) {
+    		// token is a type
+    		if (!precedence.contains(token)) {
+    			stack.push(token);
+    		}
+    		// token is an operator
+    		else {
+    			String op = token;
+    			
+    			switch(op) {
+    				case "!":
+    					String s = stack.pop();
+    					if (s.equals("true")) {
+    						stack.push("false");
+    					}
+    					else if (s.equals("false")){
+    						stack.push("true");
+    					}
+    					else {
+    						throw new RuntimeException("Trying to apply a negation on a non boolean.");
+    					}
+    					break;
+    				
+    				case "&&":
+    					java.lang.Boolean s1 = java.lang.Boolean.parseBoolean(stack.pop());
+    					java.lang.Boolean s2 = java.lang.Boolean.parseBoolean(stack.pop());
+    					java.lang.Boolean res = s1 && s2;
+    					
+    					stack.push(res.toString());
+    					
+    					break;
+    				
+    				case ">":
+    					int s3 = Integer.parseInt(stack.pop());
+    					int s4 = Integer.parseInt(stack.pop());
+    					
+    					java.lang.Boolean res2 = s4 > s3;
+    					
+    					stack.push(res2.toString());
+
+    					break;
+    					
+    				case "<":
+    					int s5 = Integer.parseInt(stack.pop());
+    					int s6 = Integer.parseInt(stack.pop());
+    					
+    					java.lang.Boolean res3 = s6 < s5;
+    					
+    					stack.push(res3.toString());
+    					
+    					break;
+    					
+    				case "+":
+    					Integer s7 = Integer.parseInt(stack.pop());
+    					Integer s8 = Integer.parseInt(stack.pop());
+    					
+    					Integer res4 = s7 + s8;
+    					
+    					stack.push(res4.toString());
+    					
+    					break;
+    				
+    				case "-":
+    					Integer s9 = Integer.parseInt(stack.pop());
+    					Integer s10 = Integer.parseInt(stack.pop());
+    					
+    					Integer res5 = s10 - s9;
+    					
+    					stack.push(res5.toString());
+    					
+    					break;
+    				
+    				case "*":
+    					Integer s11 = Integer.parseInt(stack.pop());
+    					Integer s12 = Integer.parseInt(stack.pop());
+    					
+    					Integer res6 = s11 * s12;
+    					
+    					stack.push(res6.toString());
+    					
+    					break;
+    					
+    				case "/":
+    					Integer s13 = Integer.parseInt(stack.pop());
+    					Integer s14 = Integer.parseInt(stack.pop());
+    					
+    					if (s13 == 0) {
+    						throw new RuntimeException("Division by zero.");
+    					}
+    					
+    					Integer res7 = s14 / s13;
+    					
+    					stack.push(res7.toString());
+    					
+    					break;
+    					
+    				case "==":
+    					Integer s15 = Integer.parseInt(stack.pop());
+    					Integer s16 = Integer.parseInt(stack.pop());
+    					java.lang.Boolean res8 = s15 == s16;
+    					
+    					stack.push(res8.toString());
+    					
     					break;
     					
     				default:

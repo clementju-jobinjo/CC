@@ -1,8 +1,9 @@
 package ch.unibe.scg.minijava.bcel.generator;
 
+import java.util.List;
 import java.util.Map;
 
-import org.apache.bcel.Constants;
+import org.apache.bcel.Const;
 import org.apache.bcel.classfile.Method;
 import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.InstructionFactory;
@@ -55,11 +56,10 @@ public class JavaBytecodeGenerator {
 		cg.addMethod(mg.getMethod());
 	}
 
-	@SuppressWarnings("deprecation")
 	public static ClassGen createTemporaryClass() {
 		String className = "BcelGenerated";
-		ClassGen cg = new ClassGen(className, "java.lang.Object", className, Constants.ACC_PUBLIC, new String[0]);
-		cg.addEmptyConstructor(Constants.ACC_PUBLIC);
+		ClassGen cg = new ClassGen(className, "java.lang.Object", className, Const.ACC_PUBLIC, new String[0]);
+		cg.addEmptyConstructor(Const.ACC_PUBLIC);
 
 		return cg;
 	}
@@ -73,8 +73,10 @@ public class JavaBytecodeGenerator {
     	
     	// code generation
     	Map<String, Scope> classOrMethodOrVariableToScope = typeChecker.getClassOrMethodOrVariableToScope();
-    	BytecodeGeneratorVisitor bytecodeGeneratorVisitor = new BytecodeGeneratorVisitor(this,cg,mg,il,iFact, classOrMethodOrVariableToScope);
-  
+    	List<Scope> scopes = typeChecker.getScopes();
+    	BytecodeGeneratorVisitor bytecodeGeneratorVisitor = new BytecodeGeneratorVisitor(this,cg,mg,il,iFact, classOrMethodOrVariableToScope, scopes);
+    	n.accept(bytecodeGeneratorVisitor);
+    	
 
 	}
 }
