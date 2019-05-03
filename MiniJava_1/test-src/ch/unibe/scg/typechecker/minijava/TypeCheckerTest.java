@@ -689,6 +689,14 @@ public class TypeCheckerTest {
 		String str = "public int foo2() { int i; i = 0; while (i) { i = i + 1; } return i; }";
 		assertFalse(typeCheck("MethodDeclaration", str));
 	}
+	
+//	@Test
+//	public void testMethodCallScope() {
+//	  String str = "class Main { public static void main(String[] args) { } }"
+//	      + "class Bar { public int zorg() { return 1; } }"
+//	      + "class Foo { public boolean zorg() { return false; } public int bar() { return new Bar().zorg(); } }";
+//	  assertTrue(typeCheck("Goal", str));
+//	}
 
 	private boolean typeCheck(String method, String str) {
 		TypeChecker tc = new TypeChecker();
