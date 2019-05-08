@@ -146,55 +146,52 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	}
 
 	
-//	@Override
-//	public void visit(IntArrayConstructionCall e) {
-//
-//		ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
-//		e.expression.accept(vis);
-//		String intraBracket = vis.getInfixExpression();
+	@Override
+	public void visit(IntArrayConstructionCall e) {
+
+		ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+		e.expression.accept(vis);
+		String intraBracket = vis.getInfixExpression();
+		
+		PostfixExpressionConstructor pf = new PostfixExpressionConstructor();
+		String postfixExpression = pf.postfix(intraBracket);
+		
+		String intraBracketValue = pf.evaluatePostfixValue(postfixExpression);
 //		
-//		PostfixExpressionConstructor pf = new PostfixExpressionConstructor();
-//		String postfixExpression = pf.postfix(intraBracket);
-//		
-//		//String expTypeStr = pf.evaluatePostfix(postfixExpression);
-//		
-////		if (expTypeStr.equals(Int.IntSingleton.getTypeName())) {
-////			infixExpression.append(IntArray.IntArraySingleton.getTypeName());
-////			infixExpression.append(" ");
-////		}
-////		else {
-////			throw new RuntimeException("The size of the created array must be an integer.");
-////		}
-//		
-//	}
+//		String expTypeStr = pf.evaluatePostfix(postfixExpression);
+		
+//		if (expTypeStr.equals(Int.IntSingleton.getTypeName())) {
+		infixExpression.append("int["+intraBracketValue+"]");
+		infixExpression.append(" ");
+//		}
+//		else {
+//			throw new RuntimeException("The size of the created array must be an integer.");
+//		}
+		
+	}
 	
 	
 //	@Override
 //	public void visit(ArrayCall e) {
-//		String pred = infixExpression.substring(infixExpression.length() - 6);
-//		if (pred.equals(IntArray.IntArraySingleton.getTypeName() + " ")) {
-//			infixExpression = infixExpression.delete(infixExpression.length() - 6, infixExpression.length());
-//			infixExpression.append(Int.IntSingleton.getTypeName());
-//			infixExpression.append(" ");
-//		}
-//		else {
-//			throw new RuntimeException("Trying to access a field of a non int array object.");
-//		}
+////		String pred = infixExpression.substring(infixExpression.length() - 6);
+////		if (pred.equals(IntArray.IntArraySingleton.getTypeName() + " ")) {
+////			infixExpression = infixExpression.delete(infixExpression.length() - 6, infixExpression.length());
+////			infixExpression.append(Int.IntSingleton.getTypeName());
+////			infixExpression.append(" ");
+////		}
+//		
 //	}
-//	
 	
-//	@Override
-//	public void visit(DotArrayLength e) {
-//		String pred = infixExpression.substring(infixExpression.length() - 6);
-//		if (pred.equals(IntArray.IntArraySingleton.getTypeName() + " ")) {
-//			infixExpression = infixExpression.delete(infixExpression.length() - 6, infixExpression.length());
-//			infixExpression.append(Int.IntSingleton.getTypeName());
-//			infixExpression.append(" ");
+	
+	@Override
+	public void visit(DotArrayLength e) {
+//		String expTypeStr = pf.evaluatePostfix(postfixExpression);
+		
+//		if (expTypeStr.equals(Int.IntSingleton.getTypeName())) {
+		infixExpression.append(".length");
+		infixExpression.append(" ");
 //		}
-//		else {
-//			throw new RuntimeException("Trying to get the length of an non int array object.");
-//		}
-//	}
+	}
 	
 	
 	@Override

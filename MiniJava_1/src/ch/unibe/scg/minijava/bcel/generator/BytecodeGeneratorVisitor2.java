@@ -33,6 +33,7 @@ import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.MethodGen;
 import org.apache.bcel.generic.NEWARRAY;
 import org.apache.bcel.generic.NOP;
+import org.apache.bcel.generic.ObjectType;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.RETURN;
@@ -50,6 +51,7 @@ import ch.unibe.scg.javacc.syntaxtree.MainClass;
 import ch.unibe.scg.javacc.syntaxtree.MethodDeclaration;
 import ch.unibe.scg.javacc.syntaxtree.NodeListOptional;
 import ch.unibe.scg.javacc.syntaxtree.NodeOptional;
+import ch.unibe.scg.javacc.syntaxtree.PrintStatement;
 import ch.unibe.scg.javacc.syntaxtree.Statement;
 import ch.unibe.scg.javacc.syntaxtree.VarDeclaration;
 import ch.unibe.scg.javacc.syntaxtree.WhileStatement;
@@ -358,9 +360,23 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		
 		String[] tokens = postfixExpression.split(" ");
 		
-		System.out.println(isEvaluable(postfixExpression));
+		//System.out.println(isEvaluable(postfixExpression));
 		
-		if(isEvaluable(postfixExpression)) {
+		if (postfixExpression.length() > 4 && postfixExpression.substring(0, 4).equals("int[")) {
+			int firstBracket = postfixExpression.indexOf("[");
+			int secondBracket = postfixExpression.indexOf("]");
+			String arraySize = postfixExpression.substring(firstBracket + 1, secondBracket);
+			instructionList.append(new PUSH(constantPool, Integer.parseInt(arraySize)));
+			instructionList.append(new NEWARRAY(BasicType.INT));
+			
+			if (postfixExpression.contains(".length")) {
+				instructionList.append(new ARRAYLENGTH());
+			}
+			else if ( postfixExpression.matches("int[(.)+][(.)+]")) {
+				System.out.println("HELLO ITS ME");
+			}
+		}
+		else if(isEvaluable(postfixExpression)) {
 			String val = pf.evaluatePostfixValue(postfixExpression);
 			if (val.equals("true")) {
 				instructionList.append(new PUSH(constantPool, true));
@@ -477,6 +493,17 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 //	public void visit(DotArrayLength l) {
 //		instructionList.append(new ARRAYLENGTH());
 //	}
+	
+	@Override
+	public void visit(PrintStatement st) {
+		ObjectType javaPrintStream = new ObjectType("java.io.PrintStream");
+		//InstructionFactory factory = new InstructionFactory(classGen);
+		instructionList.append(instructionFactory.createFieldAccess("java.lang.System", "out", javaPrintStream, Const.GETSTATIC));
+		
+		st.expression.accept(this);
+
+		instructionList.append(instructionFactory.createInvoke("java.io.PrintStream", "println", org.apache.bcel.generic.Type.VOID, new org.apache.bcel.generic.Type[] { org.apache.bcel.generic.Type.INT }, Const.INVOKEVIRTUAL));
+	}
 	
 	
 	public MethodGen getMethodGen() {
