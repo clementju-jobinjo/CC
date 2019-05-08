@@ -816,10 +816,14 @@ public class JavaBytecodeGeneratorTest {
 	}
 
 	private Object evaluateMethod(String input, Object... args) {
+		System.out.println(1);
 		JavaBytecodeGenerator jbcg = compile("MethodDeclaration", input);
+		System.out.println(2);
 
 		ClassGen cg = jbcg.getClassGen();
+		System.out.println(3);
 		Method m = jbcg.getMethod();
+		System.out.println(4);
 
 		return testSupport.evaluateMethod(cg, m, args);
 	}

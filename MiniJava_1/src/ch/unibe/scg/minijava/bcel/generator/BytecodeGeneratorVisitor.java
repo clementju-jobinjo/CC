@@ -14,7 +14,9 @@ import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.FieldGen;
 import org.apache.bcel.generic.IRETURN;
+import org.apache.bcel.generic.ISTORE;
 import org.apache.bcel.generic.InstructionFactory;
+import org.apache.bcel.generic.InstructionHandle;
 import org.apache.bcel.generic.InstructionList;
 import org.apache.bcel.generic.LocalVariableGen;
 import org.apache.bcel.generic.MethodGen;
@@ -22,10 +24,12 @@ import org.apache.bcel.generic.NEWARRAY;
 import org.apache.bcel.generic.PUSH;
 import org.apache.bcel.generic.RETURN;
 
+import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementIdentifierLeft;
 import ch.unibe.scg.javacc.syntaxtree.ClassDeclaration;
 import ch.unibe.scg.javacc.syntaxtree.DotArrayLength;
 import ch.unibe.scg.javacc.syntaxtree.Expression;
 import ch.unibe.scg.javacc.syntaxtree.INode;
+import ch.unibe.scg.javacc.syntaxtree.IfStatement;
 import ch.unibe.scg.javacc.syntaxtree.IntArrayConstructionCall;
 import ch.unibe.scg.javacc.syntaxtree.IntegerLiteral;
 import ch.unibe.scg.javacc.syntaxtree.MainClass;
@@ -34,6 +38,7 @@ import ch.unibe.scg.javacc.syntaxtree.NodeListOptional;
 import ch.unibe.scg.javacc.syntaxtree.NodeOptional;
 import ch.unibe.scg.javacc.syntaxtree.Statement;
 import ch.unibe.scg.javacc.syntaxtree.VarDeclaration;
+import ch.unibe.scg.javacc.syntaxtree.WhileStatement;
 import ch.unibe.scg.javacc.visitor.DepthFirstVoidVisitor;
 import ch.unibe.scg.minijava.typechecker.scopes.Scope;
 import ch.unibe.scg.minijava.typechecker.types.Method;
@@ -56,6 +61,8 @@ public class BytecodeGeneratorVisitor extends DepthFirstVoidVisitor {
 	private Scope currentScope;
 	private boolean varDeclarationInClass;
 	private Map<String, Integer> variableToLocation;
+	private String valueOfLastVisitedExpression;
+	private boolean isInWhile;
 	
 	public BytecodeGeneratorVisitor(JavaBytecodeGenerator bytecodeGenerator, ClassGen classGen, MethodGen methodGen, InstructionList instructionList, InstructionFactory instructionFactory, Map<String, Scope> classOrMethodOrVariableToScope, List<Scope> scopes) {
 		super();
@@ -70,6 +77,8 @@ public class BytecodeGeneratorVisitor extends DepthFirstVoidVisitor {
 		currentScope = scopes.get(0);
 		varDeclarationInClass = false;
 		variableToLocation = new HashMap<String, Integer>();
+		valueOfLastVisitedExpression = new String();
+		isInWhile = false;
 	}
 	
 	// ClassDeclaration
@@ -204,7 +213,7 @@ public class BytecodeGeneratorVisitor extends DepthFirstVoidVisitor {
 			argNames[i] = arg.getIdentifier();
 		}
 		
-		methodGen = new MethodGen(Const.ACC_PUBLIC | Const.ACC_STATIC, method.getReturnType().getBcelType(), argTypes, argNames, "main", classGen.getClassName(), instructionList, constantPool);
+		methodGen = new MethodGen(Const.ACC_PUBLIC, method.getReturnType().getBcelType(), argTypes, argNames, methodName, classGen.getClassName(), instructionList, constantPool);
 		
 		LocalVariableGen[] methodLocalVariables = methodGen.getLocalVariables();
 		for (int i = 0; i < methodLocalVariables.length; i++) {
@@ -251,8 +260,9 @@ public class BytecodeGeneratorVisitor extends DepthFirstVoidVisitor {
 	
 	@Override
 	public void visit(VarDeclaration varDeclaration) {
-		String varName = varDeclaration.nodeToken.tokenImage;
+		String varName = varDeclaration.identifier.nodeToken.tokenImage;
 		Variable var = currentScope.getVariable(varName);
+		
 		
 		// in class 
 		if (varDeclarationInClass) {
@@ -265,8 +275,63 @@ public class BytecodeGeneratorVisitor extends DepthFirstVoidVisitor {
 	}
 	
 	
+	// "if" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > Statement() "else" Statement()
+	@Override
+	public void visit(IfStatement ifStatement) {
+		// Expression()
+		ifStatement.expression.accept(this);
+		
+		// Expression() is true -> visit "if then"'s statement
+		if(valueOfLastVisitedExpression.equals("true")) {
+			ifStatement.statement.accept(this);
+		}
+		// Expression() is false -> visit "else"'s statement
+		else {
+			ifStatement.statement1.accept(this);
+		}
+	}
+	
+	
+	// "while" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > Statement()
+	@Override
+	public void visit(WhileStatement whileStatement) {
+		isInWhile = true;
+		
+		InstructionHandle whileStart = instructionList.getEnd();
+		
+		whileStatement.expression.accept(this);
+		
+		
+		isInWhile = false;
+	}
+	
+	
+	// Identifier() "=" Expression() ";"
+	@Override
+	public void visit(AssignmentStatementIdentifierLeft st) {
+		// Identifier()
+		String varName = st.identifier.nodeToken.tokenImage;
+		int index = variableToLocation.get(varName);
+		
+		// Expression()
+		st.expression.accept(this);
+		
+		if (valueOfLastVisitedExpression.equals("true")) {
+			
+		}
+		else if (valueOfLastVisitedExpression.equals("false")) {
+			
+		}
+		else {
+			instructionList.append(new ISTORE(index));
+		}
+		
+	}
+	
+	
 	@Override
 	public void visit(Expression exp) {
+
 		ExpressionConstructor visitor = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
 		exp.accept(visitor);
 		
@@ -285,12 +350,15 @@ public class BytecodeGeneratorVisitor extends DepthFirstVoidVisitor {
 		
 		if (val.equals("true")) {
 			instructionList.append(new PUSH(constantPool, true));
+			valueOfLastVisitedExpression = "true";
 		}
 		else if (val.equals("false")) {
 			instructionList.append(new PUSH(constantPool, false));
+			valueOfLastVisitedExpression = "false";
 		}
 		else {
 			instructionList.append(new PUSH(constantPool, Integer.parseInt(val)));
+			valueOfLastVisitedExpression = val;
 		}
 		
 //		String expTypeStr = pf.evaluatePostfix(postfixExpression);
@@ -311,5 +379,14 @@ public class BytecodeGeneratorVisitor extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(DotArrayLength l) {
 		instructionList.append(new ARRAYLENGTH());
+	}
+	
+	
+	public MethodGen getMethodGen() {
+		return methodGen;
+	}
+	
+	public ClassGen getClassGen() {
+		return classGen;
 	}
 }
