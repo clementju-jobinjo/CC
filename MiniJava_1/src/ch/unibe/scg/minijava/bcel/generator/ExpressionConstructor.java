@@ -75,16 +75,17 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	
 	
 	@Override
-	public void visit(Identifier id) {
-		
+	public void visit(Identifier id) {	
 		Variable var = currentScope.getVariable(id.nodeToken.tokenImage);
 		String value = var.getValue();
+	
 		
 		if(value != null) {
 			infixExpression.append(value);
 			infixExpression.append(" ");
 		}
 		else {
+			System.out.println("bjlkfdjs");
 			infixExpression.append(id.nodeToken.tokenImage);
 			infixExpression.append(" ");
 		}
@@ -115,16 +116,19 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(ThisExpression e) {
 		
-		Scope classScope = currentScope.getScopeEnglobant();
-
-		ClassDeclaration classDec = (ClassDeclaration)classScope.getNodeRelatedTo();
+//		Scope classScope = currentScope.getScopeEnglobant();
+//
+//		ClassDeclaration classDec = (ClassDeclaration)classScope.getNodeRelatedTo();
+//		
+//		String className = classDec.identifier.nodeToken.tokenImage;
+//		
+//		Type classType = scopes.get(0).getTypeFromString(className);
+//		
+//		infixExpression.append(classType.getTypeName());
+//		infixExpression.append(" ");
 		
-		String className = classDec.identifier.nodeToken.tokenImage;
-		
-		Type classType = scopes.get(0).getTypeFromString(className);
-		
-		infixExpression.append(classType.getTypeName());
-		infixExpression.append(" ");
+		infixExpression.append("This");
+		infixExpression.append("  ");
 	}
 	
 	
@@ -200,10 +204,13 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(DotFunctionCall e) {
 
-//		String[] tokens = infixExpression.toString().trim().split("\\s+");
-//		String beforeDot = tokens[tokens.length-1];
+		String[] tokens = infixExpression.toString().trim().split("\\s+");
+		String beforeDot = tokens[tokens.length-1];
 		
 		String functionName = e.identifier.nodeToken.tokenImage;
+		infixExpression.append("."+functionName+"/"+beforeDot);
+		infixExpression.append(" ");
+	}
 		
 //		System.out.println(infixExpression.toString());
 //		
@@ -269,28 +276,30 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 		
 //		infixExpression.replace(infixExpression.length() - (thisType.length() + 1), infixExpression.length(), method.getReturnType().getTypeName());
 //		infixExpression.append(" ");
-		String[] tokens = infixExpression.toString().trim().split("\\s+");
-		if (tokens[tokens.length - 1].startsWith("new")) {
-			infixExpression.append(tokens[tokens.length - 1].substring(0, tokens[tokens.length - 1].length() - 2));
-		}
-		else {
-			infixExpression.deleteCharAt(infixExpression.length() - 1);
-		}
 		
-		infixExpression.append(
-				"." // dot
-				+ functionName // method name
-				+ e.nodeToken1.tokenImage // parenthesis "("
-				);
+		
+//		String[] tokens = infixExpression.toString().trim().split("\\s+");
+//		if (tokens[tokens.length - 1].startsWith("new")) {
+//			infixExpression.append(tokens[tokens.length - 1].substring(0, tokens[tokens.length - 1].length() - 2));
+//		}
+//		else {
+//			infixExpression.deleteCharAt(infixExpression.length() - 1);
+//		}
+//		
+//		infixExpression.append(
+//				"." // dot
+//				+ functionName // method name
+//				+ e.nodeToken1.tokenImage // parenthesis "("
+//				);
+//		
+		
+		
+		
 //		for (int i = 0; i < methodArguments.size(); i++) {
 //			if (i != 0) {
 //				infixExpression.append(",");
 //			}
 //			infixExpression.append(methodArguments.get(i).getIdentifier());
 //		}
-		infixExpression.append(
-				e.nodeToken2.tokenImage // parenthesis ")"
-				+ " "
-				);
+
 	}
-}

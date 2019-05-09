@@ -201,7 +201,7 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 
 		String[] tokens = infixExpression.toString().trim().split("\\s+");
 		String thisType = tokens[tokens.length-1];
-		
+		System.out.println("DJKLAJLKDJLKJFLKDJFLé"+thisType);
 		String functionName = e.identifier.nodeToken.tokenImage;
 		
 		// scope of thisType class

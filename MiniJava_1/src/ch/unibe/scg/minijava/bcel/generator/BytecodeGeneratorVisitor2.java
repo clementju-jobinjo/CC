@@ -393,9 +393,10 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		
 		String[] tokens = postfixExpression.split(" ");
 		
-		//System.out.println(isEvaluable(postfixExpression));
 		
-		// array
+		
+		
+		// Array
 		if (postfixExpression.length() > 4 && postfixExpression.substring(0, 4).equals("int[")) {
 			int firstBracket = postfixExpression.indexOf("[");
 			int secondBracket = postfixExpression.indexOf("]");
@@ -410,8 +411,9 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				System.out.println("HELLO ITS ME");
 			}
 		}
-		// object constructor
+		// Object constructor alone
 		else if (postfixExpression.matches("new(.)+\\((.)?\\)\\s") && !postfixExpression.contains(".")) {
+			System.out.println("2");
 			int indexOfSecondBracket = postfixExpression.indexOf(")");
 			String className = postfixExpression.substring(3, indexOfSecondBracket - 1);
 			
@@ -419,7 +421,9 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 			instructionList.append(new DUP());
 			instructionList.append(instructionFactory.createInvoke(className, "<init>", org.apache.bcel.generic.Type.VOID, new org.apache.bcel.generic.Type[0], Const.INVOKESPECIAL));
 		}
+		// If the postfix expression is a constant
 		else if (isEvaluable(postfixExpression)) {
+			System.out.println("3");
 			String val = pf.evaluatePostfixValue(postfixExpression);
 			if (val.equals("true")) {
 				instructionList.append(new PUSH(constantPool, true));
@@ -432,7 +436,9 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 			}
 		}
 		else {
+			System.out.println("4");
 			for (String s : tokens) {
+				System.out.println("----------TOKEN"+ s );
 				if (s.equals("+")) {
 					instructionList.append(new IADD());
 				}
@@ -486,71 +492,74 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				else if (s.equals("false")){
 					instructionList.append(new PUSH(constantPool, false));
 				}
-				else if (s.matches("new(.)+\\((.)?\\)") && !s.contains(".")) {
+				else if (s.contentEquals("This")) {
+					instructionList.append(new ALOAD(0));
+				}
+				// In the case of the pattern .function()
+				else if (s.contains(".")) {
+					System.out.println("5");
+						System.out.println("7");
+				
+						// the token is of the form function/beforefunction/beforefunction/beforefunction/variable
+						int indexDot = s.indexOf("/");
+						String methodName = s.substring(1, indexDot);
+						System.out.println(methodName);
+						
+						Method method = currentScope.getMethod(methodName);
+						
+						
+						int test = s.lastIndexOf("/");
+						String correspondingClass;
+						// foo part
+						String varName = s.substring(test+1, s.length());
+						System.out.println("djkj"+varName);
+						if(varName.contains("new")){
+							correspondingClass= varName.substring(3,varName.length()-2);
+							
+						}
+						else if(varName.contains("This")){
+							Scope classScope = currentScope.getScopeEnglobant();
+							ClassDeclaration classDec = (ClassDeclaration)classScope.getNodeRelatedTo();
+							String className = classDec.identifier.nodeToken.tokenImage;
+							//Type classType = scopes.get(0).getTypeFromString(className);
+							correspondingClass = className;
+							
+						}
+						else{
+							Variable var = currentScope.getVariableNonRecursive(varName);
+							correspondingClass = var.getType().getTypeName();
+						}
+						
+						System.out.println("Corresponding"+correspondingClass);
+						
+						
+						//Scope correspondingClass = classOrMethodOrVariableToScope.get(method.getIdentifier());
+						//correspondingClass.getTypeFromString(method.getIdentifier());
+						List<Variable> methodArgs = method.getArguments();
+						org.apache.bcel.generic.Type[] argTypes = new org.apache.bcel.generic.Type[methodArgs.size()];
+						
+						for (int i = 0; i < methodArgs.size(); i++) {
+							argTypes[methodArgs.size() - i - 1] = methodArgs.get(i).getType().getBcelType();
+						}
+						
+						instructionList.append(instructionFactory.createInvoke(correspondingClass, methodName, method.getReturnType().getBcelType(), argTypes, Const.INVOKEVIRTUAL));	
+				}
+				// new a la volee
+				else if(s.contains("new")) {
+					System.out.println("*Salut");
 					int indexOfSecondBracket = postfixExpression.indexOf(")");
 					String className = postfixExpression.substring(3, indexOfSecondBracket - 1);
 					
 					instructionList.append(instructionFactory.createNew(className));
 					instructionList.append(new DUP());
 					instructionList.append(instructionFactory.createInvoke(className, "<init>", org.apache.bcel.generic.Type.VOID, new org.apache.bcel.generic.Type[0], Const.INVOKESPECIAL));
+
 				}
-				else if (s.contains(".")) {
-					// newFoo.baz() or f.baz()
-					if (s.contains("new")) {
-						System.out.println("SUILA");
-						// newFoo.baz()
-						int indexDot = s.indexOf(".");
-						
-						// newFoo part -> keep Foo
-						String correspondingClass = s.substring(3, indexDot);
-						
-						// baz() part
-						String methodName = s.substring(indexDot + 1, s.length() - 2);
-						
-						
-						Method method = classOrMethodOrVariableToScope.get(correspondingClass).getMethod(methodName);
-						List<Variable> methodArgs = method.getArguments();
-						org.apache.bcel.generic.Type[] argTypes = new org.apache.bcel.generic.Type[methodArgs.size()];
-						
-						for (int i = 0; i < methodArgs.size(); i++) {
-							argTypes[methodArgs.size() - i - 1] = methodArgs.get(i).getType().getBcelType();
-						}
-						
-						System.out.println(correspondingClass);
-						System.out.println(methodName);
-						System.out.println(method.getReturnType().getBcelType().toString());
-						instructionList.append(instructionFactory.createInvoke(correspondingClass, methodName, method.getReturnType().getBcelType(), argTypes, Const.INVOKEVIRTUAL));
-					}
-					else {
-						// foo.baz()
-						int indexDot = s.indexOf(".");
-						
-						// foo part
-						String varName = s.substring(0, indexDot);
-						Variable var = currentScope.getVariableNonRecursive(varName);
-						String correspondingClass = var.getType().getTypeName();
-						
-						instructionList.append(new ALOAD(variableToLocation.get(varName)));
-						
-						// baz() part
-						String methodName = s.substring(indexDot + 1, s.length() - 2);
-						
-						Method method = currentScope.getMethod(methodName);
-						List<Variable> methodArgs = method.getArguments();
-						org.apache.bcel.generic.Type[] argTypes = new org.apache.bcel.generic.Type[methodArgs.size()];
-						
-						for (int i = 0; i < methodArgs.size(); i++) {
-							argTypes[methodArgs.size() - i - 1] = methodArgs.get(i).getType().getBcelType();
-						}
-						
-						instructionList.append(instructionFactory.createInvoke(correspondingClass, methodName, method.getReturnType().getBcelType(), argTypes, Const.INVOKEVIRTUAL));
-					}
-					
-				}
+				// Variable for instance f.function()
 				else if (!s.matches("[0-9]+")) {
+					System.out.println("8");
 					
 					String typeName = currentScope.getVariableNonRecursive(s).getType().getTypeName();
-					
 //					if(isInAssignment) {
 //						switch(typeName) {
 //							case "int":
