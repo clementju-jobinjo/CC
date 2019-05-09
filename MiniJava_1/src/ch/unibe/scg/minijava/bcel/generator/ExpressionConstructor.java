@@ -54,20 +54,22 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	
 	@Override
 	public void visit(ObjectConstructionCall e) {
-		Type type = null;
-		
-		for (Scope s : scopes) {
-			Type t = s.getTypeFromString(e.identifier.nodeToken.tokenImage);
-			if (t != null) {
-				type = t;
-				break;
-			}
-		}
-		if (type == null) {
-			throw new RuntimeException("Unknown type.");
-		}
-		
-		infixExpression.append(type.getTypeName());
+//		Type type = null;
+//		
+//		for (Scope s : scopes) {
+//			Type t = s.getTypeFromString(e.identifier.nodeToken.tokenImage);
+//			if (t != null) {
+//				type = t;
+//				break;
+//			}
+//		}
+//		if (type == null) {
+//			throw new RuntimeException("Unknown type.");
+//		}
+//		
+//		infixExpression.append(type.getTypeName());
+//		infixExpression.append(" ");
+		infixExpression.append("new" + e.identifier.nodeToken.tokenImage + "()");
 		infixExpression.append(" ");
 	}
 	
@@ -83,7 +85,8 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 			infixExpression.append(" ");
 		}
 		else {
-			throw new RuntimeException("Variable has no value.");
+			infixExpression.append(id.nodeToken.tokenImage);
+			infixExpression.append(" ");
 		}
 	}
 	
@@ -197,54 +200,60 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(DotFunctionCall e) {
 
-		String[] tokens = infixExpression.toString().trim().split("\\s+");
-		String thisType = tokens[tokens.length-1];
+//		String[] tokens = infixExpression.toString().trim().split("\\s+");
+//		String beforeDot = tokens[tokens.length-1];
 		
 		String functionName = e.identifier.nodeToken.tokenImage;
 		
-		// scope of thisType class
-		Scope thisScope = classOrMethodOrVariableToScope.get(thisType);
+//		System.out.println(infixExpression.toString());
+//		
+//		// scope of thisType class
+//		Scope thisScope = classOrMethodOrVariableToScope.get(beforeDot);
+//		String className;
+//		
+//		// case f.baz() -- Otherwise case new Foo().baz()
+//		if(beforeDot.matches("new(.)+\\((.)?\\)\\s")) {
+//			className = beforeDot.substring(3, beforeDot.length() - 3);
+//			Variable var = currentScope.getVariableNonRecursive(className);
+//			Type t = var.getType();
+//			thisScope = classOrMethodOrVariableToScope.get(t.getTypeName());
+//		}
 		
-		Method method = thisScope.getMethod(functionName);
-		
-		if (method == null) {
-			throw new RuntimeException("Trying to call a non-existing method.");
-		}
-		
-		
-		// arguments
-		List<Variable> methodArguments = method.getArguments();
+//		Method method = thisScope.getMethod(functionName);
+//		
+//		// arguments
+//		List<Variable> methodArguments = method.getArguments();
 		
 		// (Expression (xxx)*)?
 		//List<Type> argsType = new ArrayList<Type>();
 		
-		NodeOptional nodeOptional = e.nodeOptional;
-		if (nodeOptional.present()) {
-			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
-			
-			ValueVisitor visitor = new ValueVisitor(scopes, classOrMethodOrVariableToScope);
-			nodeSequence.elementAt(0).accept(visitor);
-			Variable firstArg = methodArguments.get(0);
-			firstArg.setValue(visitor.getValueOfLastExpression());
-			//argsType.add(visitor.getTypeOfLastExpression());
-			
-
-			//  ("," Expression() )*
-			NodeListOptional nodeListOptional2 = (NodeListOptional) nodeSequence.elementAt(1);
-			if (nodeListOptional2.present()) {
-				for (int j = 0; j < nodeListOptional2.size(); j++) {
-					INode node2 = nodeListOptional2.elementAt(j);
-					NodeSequence nodeSequence2 = (NodeSequence) node2;
-					
-					ValueVisitor visitor2 = new ValueVisitor(scopes, classOrMethodOrVariableToScope);
-					nodeSequence2.elementAt(1).accept(visitor2);
-					Variable nextArg = methodArguments.get(j + 1);
-					nextArg.setValue(visitor2.getValueOfLastExpression());
-					//argsType.add(visitor2.getTypeOfLastExpression());
-
-				}
-			}
-		}
+//		NodeOptional nodeOptional = e.nodeOptional;
+//		if (nodeOptional.present()) {
+//			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
+//			
+//			ValueVisitor visitor = new ValueVisitor(scopes, classOrMethodOrVariableToScope);
+//			nodeSequence.elementAt(0).accept(visitor);
+//			Variable firstArg = methodArguments.get(0);
+//			firstArg.setValue(visitor.getValueOfLastExpression());
+//			//argsType.add(visitor.getTypeOfLastExpression());
+//			
+//
+//			//  ("," Expression() )*
+//			NodeListOptional nodeListOptional2 = (NodeListOptional) nodeSequence.elementAt(1);
+//			if (nodeListOptional2.present()) {
+//				for (int j = 0; j < nodeListOptional2.size(); j++) {
+//					INode node2 = nodeListOptional2.elementAt(j);
+//					NodeSequence nodeSequence2 = (NodeSequence) node2;
+//					
+//					ValueVisitor visitor2 = new ValueVisitor(scopes, classOrMethodOrVariableToScope);
+//					nodeSequence2.elementAt(1).accept(visitor2);
+//					Variable nextArg = methodArguments.get(j + 1);
+//					nextArg.setValue(visitor2.getValueOfLastExpression());
+//					//argsType.add(visitor2.getTypeOfLastExpression());
+//
+//				}
+//			}
+//		}
 		
 //		// same length -> args list
 //		if (argsType.size() != methodArguments.size()) {
@@ -260,17 +269,25 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 		
 //		infixExpression.replace(infixExpression.length() - (thisType.length() + 1), infixExpression.length(), method.getReturnType().getTypeName());
 //		infixExpression.append(" ");
+		String[] tokens = infixExpression.toString().trim().split("\\s+");
+		if (tokens[tokens.length - 1].startsWith("new")) {
+			infixExpression.append(tokens[tokens.length - 1].substring(0, tokens[tokens.length - 1].length() - 2));
+		}
+		else {
+			infixExpression.deleteCharAt(infixExpression.length() - 1);
+		}
 		
 		infixExpression.append(
-				e.nodeToken.tokenImage //function name
+				"." // dot
+				+ functionName // method name
 				+ e.nodeToken1.tokenImage // parenthesis "("
 				);
-		for (int i = 0; i < methodArguments.size(); i++) {
-			if (i != 0) {
-				infixExpression.append(",");
-			}
-			infixExpression.append(methodArguments.get(i).getValue());
-		}
+//		for (int i = 0; i < methodArguments.size(); i++) {
+//			if (i != 0) {
+//				infixExpression.append(",");
+//			}
+//			infixExpression.append(methodArguments.get(i).getIdentifier());
+//		}
 		infixExpression.append(
 				e.nodeToken2.tokenImage // parenthesis ")"
 				+ " "
