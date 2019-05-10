@@ -87,6 +87,8 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		String className = mainClass.identifier.nodeToken.tokenImage;
 		classOrMethodOrVariableToScope.put(className, currentScope);
 		scopes.get(0).addClass(stringToType.get(className));
+		
+		currentScope.addMethod(new Method("main", VoidType.VoidSingleton, new ArrayList<Variable>()));
 	}
 
 

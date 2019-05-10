@@ -90,6 +90,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 	private boolean isInWhile;
 	private boolean isInAssignment;
 	private String lastVisitedClass;
+	private String currentClassFunctionCall;
 	
 	public BytecodeGeneratorVisitor2(JavaBytecodeGenerator bytecodeGenerator, ClassGen classGen, MethodGen methodGen, InstructionList instructionList, InstructionFactory instructionFactory, Map<String, Scope> classOrMethodOrVariableToScope, List<Scope> scopes) {
 		super();
@@ -107,6 +108,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		valueOfLastVisitedExpression = new String();
 		isInWhile = false;
 		isInAssignment = false;
+		currentClassFunctionCall = new String();
 	}
 	
 	// ClassDeclaration
@@ -166,6 +168,8 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(MainClass mainClass) {
 		String className = mainClass.identifier.nodeToken.tokenImage;
+		System.out.println(className);
+		System.out.println(classOrMethodOrVariableToScope.get(className));
 		
 		currentScope = classOrMethodOrVariableToScope.get(className);
 		
@@ -182,6 +186,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		instructionList = new InstructionList();
 		
 		Method m = currentScope.getMethod("main");
+		currentScope = classOrMethodOrVariableToScope.get(m.getIdentifier());
 		
 		// main method: arguments
 		List<Variable> args = m.getArguments();
@@ -493,6 +498,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 			instructionList.append(instructionFactory.createNew(className));
 			instructionList.append(new DUP());
 			instructionList.append(instructionFactory.createInvoke(className, "<init>", org.apache.bcel.generic.Type.VOID, new org.apache.bcel.generic.Type[0], Const.INVOKESPECIAL));
+			currentClassFunctionCall = className;
 		}
 		// If the postfix expression is a constant
 		else if (isEvaluable(postfixExpression)) {
@@ -567,73 +573,59 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				}
 				else if (s.contentEquals("This")) {
 					instructionList.append(new ALOAD(0));
+					Scope classScope = currentScope.getScopeEnglobant();
+					ClassDeclaration classDec = (ClassDeclaration)classScope.getNodeRelatedTo();
+					String className = classDec.identifier.nodeToken.tokenImage;
+					currentClassFunctionCall = className;
 				}
 				// In the case of the pattern .function()
 				else if (s.contains(".")) {
 					System.out.println("5");
 						System.out.println("7");
-				
-						// the token is of the form function/beforefunction/beforefunction/beforefunction/variable
-						int indexDot = s.indexOf("(");
-						String methodName = s.substring(1, indexDot);
-						System.out.println("Methodname " +methodName);
 						
-						Method method = currentScope.getMethod(methodName);
-						lastVisitedClass = method.getReturnType().getTypeName();
-						
-						
-						int indexOfSlash = s.lastIndexOf("/");
-						String correspondingClass;
-						// foo part
-						String varName = s.substring(indexOfSlash+1, s.length());
-						System.out.println("djkj"+varName);
-						if(varName.contains("new")){
-							correspondingClass= varName.substring(3,varName.length()-2);
+						// new alone
+						if (s.matches("new(.)+\\((.)?\\)\\s")) {
+							System.out.println("2");
+							int indexOfSecondBracket = postfixExpression.indexOf(")");
+							String className = postfixExpression.substring(3, indexOfSecondBracket - 1);
 							
+							instructionList.append(instructionFactory.createNew(className));
+							instructionList.append(new DUP());
+							instructionList.append(instructionFactory.createInvoke(className, "<init>", org.apache.bcel.generic.Type.VOID, new org.apache.bcel.generic.Type[0], Const.INVOKESPECIAL));
+							currentClassFunctionCall = className;
 						}
-						else if(varName.contains("This")){
-							Scope classScope = currentScope.getScopeEnglobant();
-							ClassDeclaration classDec = (ClassDeclaration)classScope.getNodeRelatedTo();
-							String className = classDec.identifier.nodeToken.tokenImage;
-							//Type classType = scopes.get(0).getTypeFromString(className);
-							correspondingClass = className;
+
+						// case .function/[(dot function)+|newObject()|This]
+						else {
+							String[] slashTokens = s.split("/");
+							String functionName = slashTokens[0].substring(1, slashTokens[0].indexOf("("));
+
+							Method m = classOrMethodOrVariableToScope.get(currentClassFunctionCall).getMethod(functionName);
+							org.apache.bcel.generic.Type returnType = m.getReturnType().getBcelType();
 							
-						}
-						else{
-							Variable var = currentScope.getVariableNonRecursive(varName);
-							correspondingClass = var.getType().getTypeName();
-						}
-						
-						if(!correspondingClass.equals(lastVisitedClass) && !lastVisitedClass.matches("int|boolean|int\\[\\]")) {
-							correspondingClass = lastVisitedClass;
-						}
-						
-						System.out.println("Corresponding"+correspondingClass);
-						
-						
-						// ARGUMENTS
-						String argsString = s.substring(s.indexOf("(") + 1, s.indexOf(")")).replace("%", " ");
-						String[] argsTokens = argsString.split(",");
-						
-						for (String argExp : argsTokens) {
-							if (argExp.length() > 0) {
-								generateIntrabracketBytecode(argExp, 1);
+							// ARGUMENTS
+							String argsString = s.substring(s.indexOf("(") + 1, s.indexOf(")")).replace("%", " ");
+							String[] argsTokens = argsString.split(",");
+							
+							for (String argExp : argsTokens) {
+								if (argExp.length() > 0) {
+									generateIntrabracketBytecode(argExp, 1);
+								}
 							}
+							
+							List<Variable> methodArgs = m.getArguments();
+							org.apache.bcel.generic.Type[] argTypes = new org.apache.bcel.generic.Type[methodArgs.size()];
+							
+							for (int i = 0; i < methodArgs.size(); i++) {
+								argTypes[methodArgs.size() - i - 1] = methodArgs.get(i).getType().getBcelType();
+							}
+							
+							// END ARGUMENTS
+							
+							instructionList.append(instructionFactory.createInvoke(currentClassFunctionCall, functionName, returnType, argTypes, Const.INVOKEVIRTUAL));
+							
+							currentClassFunctionCall = classOrMethodOrVariableToScope.get(functionName).getScopeEnglobant().getMethod(functionName).getReturnType().getTypeName();
 						}
-						
-						// END ARGUMENTS
-						
-						
-						//Scope correspondingClass = classOrMethodOrVariableToScope.get(method.getIdentifier());
-						//correspondingClass.getTypeFromString(method.getIdentifier());
-						List<Variable> methodArgs = method.getArguments();
-						org.apache.bcel.generic.Type[] argTypes = new org.apache.bcel.generic.Type[methodArgs.size()];
-						
-						for (int i = 0; i < methodArgs.size(); i++) {
-							argTypes[methodArgs.size() - i - 1] = methodArgs.get(i).getType().getBcelType();
-						}
-						
-						instructionList.append(instructionFactory.createInvoke(correspondingClass, methodName, method.getReturnType().getBcelType(), argTypes, Const.INVOKEVIRTUAL));	
 				}
 				// new a la volee
 				else if(s.contains("new")) {
@@ -644,7 +636,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 					instructionList.append(instructionFactory.createNew(className));
 					instructionList.append(new DUP());
 					instructionList.append(instructionFactory.createInvoke(className, "<init>", org.apache.bcel.generic.Type.VOID, new org.apache.bcel.generic.Type[0], Const.INVOKESPECIAL));
-
+					currentClassFunctionCall = className;
 				}
 				// Variable for instance f.function()
 				else if (!s.matches("[0-9]+")) {
@@ -686,22 +678,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				}
 			}
 		}
-		
-//		if (val.equals("true")) {
-//			instructionList.append(new PUSH(constantPool, true));
-//			valueOfLastVisitedExpression = "true";
-//		}
-//		else if (val.equals("false")) {
-//			instructionList.append(new PUSH(constantPool, false));
-//			valueOfLastVisitedExpression = "false";
-//		}
-//		else {
-//			instructionList.append(new PUSH(constantPool, Integer.parseInt(val)));
-//			valueOfLastVisitedExpression = val;
-//		}
-		
-//		String expTypeStr = pf.evaluatePostfix(postfixExpression);
-//		Type expType = null;
 	}
 	
 	private boolean isEvaluable(String exp) {
