@@ -84,6 +84,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 	private String valueOfLastVisitedExpression;
 	private boolean isInWhile;
 	private boolean isInAssignment;
+	private String lastVisitedClass;
 	
 	public BytecodeGeneratorVisitor2(JavaBytecodeGenerator bytecodeGenerator, ClassGen classGen, MethodGen methodGen, InstructionList instructionList, InstructionFactory instructionFactory, Map<String, Scope> classOrMethodOrVariableToScope, List<Scope> scopes) {
 		super();
@@ -506,6 +507,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 						System.out.println(methodName);
 						
 						Method method = currentScope.getMethod(methodName);
+						lastVisitedClass = method.getReturnType().getTypeName();
 						
 						
 						int test = s.lastIndexOf("/");
@@ -530,6 +532,10 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 							correspondingClass = var.getType().getTypeName();
 						}
 						
+						if(!correspondingClass.equals(lastVisitedClass) && !lastVisitedClass.matches("int|boolean|int\\[\\]")) {
+							correspondingClass = lastVisitedClass;
+						}
+						
 						System.out.println("Corresponding"+correspondingClass);
 						
 						
@@ -549,7 +555,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 					System.out.println("*Salut");
 					int indexOfSecondBracket = postfixExpression.indexOf(")");
 					String className = postfixExpression.substring(3, indexOfSecondBracket - 1);
-					
+					lastVisitedClass = className;
 					instructionList.append(instructionFactory.createNew(className));
 					instructionList.append(new DUP());
 					instructionList.append(instructionFactory.createInvoke(className, "<init>", org.apache.bcel.generic.Type.VOID, new org.apache.bcel.generic.Type[0], Const.INVOKESPECIAL));
