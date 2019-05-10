@@ -16,9 +16,12 @@ import org.apache.bcel.generic.ClassGen;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.DUP;
 import org.apache.bcel.generic.FieldGen;
+import org.apache.bcel.generic.GETFIELD;
 import org.apache.bcel.generic.GOTO;
 import org.apache.bcel.generic.IADD;
+import org.apache.bcel.generic.IALOAD;
 import org.apache.bcel.generic.IAND;
+import org.apache.bcel.generic.IASTORE;
 import org.apache.bcel.generic.IDIV;
 import org.apache.bcel.generic.IFEQ;
 import org.apache.bcel.generic.IFGT;
@@ -42,6 +45,8 @@ import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.RETURN;
 import org.apache.bcel.generic.SWAP;
 
+import ch.unibe.scg.javacc.syntaxtree.ArrayAccess;
+import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementArrayLeft;
 import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementIdentifierLeft;
 import ch.unibe.scg.javacc.syntaxtree.ClassDeclaration;
 import ch.unibe.scg.javacc.syntaxtree.DotArrayLength;
@@ -362,6 +367,10 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 //		String varName = st.identifier.nodeToken.tokenImage;
 //		int index = variableToLocation.get(varName);
 		
+		if (!variableToLocation.containsKey(st.identifier.nodeToken.tokenImage)) {
+			instructionList.append(new ALOAD(0));
+		}
+		
 		// Expression()
 		st.expression.accept(this);
 		
@@ -375,6 +384,38 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		isInAssignment = false;
 		
 	}
+	
+	
+	// Identifier() ArrayAccess() "=" Expression() ";"
+	@Override
+	public void visit(AssignmentStatementArrayLeft st) {
+		// Visit Identifier
+		String arrayIdentifier = st.identifier.nodeToken.tokenImage;
+		
+		if (!variableToLocation.containsKey(st.identifier.nodeToken.tokenImage)) {
+			String typeName = currentScope.getVariable(arrayIdentifier).getType().getBcelType().getSignature();
+			instructionList.append(new ALOAD(0));
+			instructionList.append(new GETFIELD(constantPool.addFieldref(classGen.getClassName(), arrayIdentifier, typeName)));
+		}
+		else {
+			instructionList.append(new ALOAD(variableToLocation.get(arrayIdentifier)));
+		}
+		
+		// Visit array index
+		st.arrayAccess.accept(this);
+		
+		// Visit Expression
+		st.expression.accept(this);
+		
+		instructionList.append(new IASTORE());
+	}
+	
+	
+//	// [ Expression() ]
+//	@Override
+//	public void visit (ArrayAccess arrayAccess) {
+//		arrayAccess.expression.accept(this);
+//	}
 	
 	
 	@Override
@@ -396,20 +437,51 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		
 		
 		
-		
 		// Array
-		if (postfixExpression.length() > 4 && postfixExpression.substring(0, 4).equals("int[")) {
-			int firstBracket = postfixExpression.indexOf("[");
-			int secondBracket = postfixExpression.indexOf("]");
-			String arraySize = postfixExpression.substring(firstBracket + 1, secondBracket);
-			instructionList.append(new PUSH(constantPool, Integer.parseInt(arraySize)));
-			instructionList.append(new NEWARRAY(BasicType.INT));
+		if (infixExpression.length() > 4 && infixExpression.contains("[")) {
+			System.out.println("02934i");
+			// Expression -> new int[1]
+			int firstBracket = infixExpression.indexOf("[");
+			if (infixExpression.startsWith("newint")) {
+				
+				generateIntrabracketBytecode(infixExpression, 0);
 			
-			if (postfixExpression.contains(".length")) {
+				//instructionList.append(new PUSH(constantPool, Integer.parseInt(intraBracket)));
+				instructionList.append(new NEWARRAY(BasicType.INT));
+			}
+			// Expression -> identifier[index] (ex. return array[0])
+			else {
+				// load array
+				String arrayIdentifier = infixExpression.substring(0, firstBracket);
+				
+				if(variableToLocation.containsKey(arrayIdentifier)){
+					instructionList.append(new ALOAD(variableToLocation.get(arrayIdentifier)));
+				}
+				else {
+					String typeName = currentScope.getVariable(arrayIdentifier).getType().getBcelType().getSignature();
+					instructionList.append(new ALOAD(0));
+					instructionList.append(new GETFIELD(constantPool.addFieldref(classGen.getClassName(), arrayIdentifier, typeName)));
+				}
+				
+				// push index
+				generateIntrabracketBytecode(infixExpression, 0);
+				
+				// load value in array at index
+				instructionList.append(new IALOAD());
+			}
+			
+			if (infixExpression.contains(".length")) {
 				instructionList.append(new ARRAYLENGTH());
 			}
-			else if ( postfixExpression.matches("int[(.)+][(.)+]")) {
-				System.out.println("HELLO ITS ME");
+			else if ( infixExpression.matches("newint\\[(.)+\\]\\[(.)+\\]\\s")) {
+				int indexOfSecondOpeningBracket = infixExpression.lastIndexOf("[");
+				String secondIndexExpression = infixExpression.substring(indexOfSecondOpeningBracket);
+				
+				// push index
+				generateIntrabracketBytecode(secondIndexExpression, 0);
+				
+				// load value in array at index
+				instructionList.append(new IALOAD());
 			}
 		}
 		// Object constructor alone
@@ -502,18 +574,18 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 						System.out.println("7");
 				
 						// the token is of the form function/beforefunction/beforefunction/beforefunction/variable
-						int indexDot = s.indexOf("/");
+						int indexDot = s.indexOf("(");
 						String methodName = s.substring(1, indexDot);
-						System.out.println(methodName);
+						System.out.println("Methodname " +methodName);
 						
 						Method method = currentScope.getMethod(methodName);
 						lastVisitedClass = method.getReturnType().getTypeName();
 						
 						
-						int test = s.lastIndexOf("/");
+						int indexOfSlash = s.lastIndexOf("/");
 						String correspondingClass;
 						// foo part
-						String varName = s.substring(test+1, s.length());
+						String varName = s.substring(indexOfSlash+1, s.length());
 						System.out.println("djkj"+varName);
 						if(varName.contains("new")){
 							correspondingClass= varName.substring(3,varName.length()-2);
@@ -537,6 +609,19 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 						}
 						
 						System.out.println("Corresponding"+correspondingClass);
+						
+						
+						// ARGUMENTS
+						String argsString = s.substring(s.indexOf("(") + 1, s.indexOf(")")).replace("%", " ");
+						String[] argsTokens = argsString.split(",");
+						
+						for (String argExp : argsTokens) {
+							if (argExp.length() > 0) {
+								generateIntrabracketBytecode(argExp, 1);
+							}
+						}
+						
+						// END ARGUMENTS
 						
 						
 						//Scope correspondingClass = classOrMethodOrVariableToScope.get(method.getIdentifier());
@@ -565,47 +650,39 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				else if (!s.matches("[0-9]+")) {
 					System.out.println("8");
 					
-					String typeName = currentScope.getVariableNonRecursive(s).getType().getTypeName();
-//					if(isInAssignment) {
-//						switch(typeName) {
-//							case "int":
-//								instructionList.append(new ISTORE(variableToLocation.get(s)));
-//								break;
-//							
-//							case "boolean":
-//								instructionList.append(new ISTORE(variableToLocation.get(s)));
-//								break;
-//							
-//							case "int[]":
-//								instructionList.append(new ASTORE(variableToLocation.get(s)));
-//								break;
-//							
-//							default:
-//								instructionList.append(new ASTORE(variableToLocation.get(s)));
-//						}
-//					}
-//					else {
-					switch(typeName) {
-						case "int":
-							instructionList.append(new ILOAD(variableToLocation.get(s)));
-							break;
-						
-						case "boolean":
-							instructionList.append(new ILOAD(variableToLocation.get(s)));
-							break;
-						
-						case "int[]":
-							instructionList.append(new ALOAD(variableToLocation.get(s)));
-							break;
-						
-						default:
-							instructionList.append(new ALOAD(variableToLocation.get(s)));
+					// Non-field case
+					if (variableToLocation.containsKey(s)){
+						String typeName = currentScope.getVariableNonRecursive(s).getType().getTypeName();
+
+						switch(typeName) {
+							case "int":
+								instructionList.append(new ILOAD(variableToLocation.get(s)));
+								break;
+							
+							case "boolean":
+								instructionList.append(new ILOAD(variableToLocation.get(s)));
+								break;
+							
+							case "int[]":
+								instructionList.append(new ALOAD(variableToLocation.get(s)));
+								break;
+							
+							default:
+								instructionList.append(new ALOAD(variableToLocation.get(s)));
+						}
 					}
-//					}
+					// class field case
+					else {
+						String typeName = currentScope.getVariable(s).getType().getBcelType().getSignature();
+						instructionList.append(new ALOAD(0));
+						instructionList.append(new GETFIELD(constantPool.addFieldref(classGen.getClassName(), s, typeName)));
+					}
+					
+					
 					
 				} 
 				else {
-						instructionList.append(new PUSH(constantPool, Integer.parseInt(s)));
+					instructionList.append(new PUSH(constantPool, Integer.parseInt(s)));
 				}
 			}
 		}
@@ -639,29 +716,82 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		return isEvaluable;
 	}
 	
+	private void generateIntrabracketBytecode(String infixExpression, int mode) {
+		int firstBracket;
+		int secondBracket;
+		String intraBracket;
+		String[] intraBracketTokens;
+		
+		if (mode == 0) {
+			firstBracket = infixExpression.indexOf("[");
+			secondBracket = infixExpression.indexOf("]");
+			intraBracket = infixExpression.substring(firstBracket + 1, secondBracket);
+			intraBracketTokens = intraBracket.split(" ");
+		}
+		else {
+			intraBracket = infixExpression;
+			intraBracketTokens = intraBracket.split(" ");
+		}
+		
+		for (String s : intraBracketTokens) {
+			if (s.equals("+")) {
+				instructionList.append(new IADD());
+			}
+			else if (s.equals("-")) {
+				instructionList.append(new ISUB());
+			}
+			else if (s.equals("*")) {
+				instructionList.append(new IMUL());
+			}
+			else if (s.equals("/")) {
+				instructionList.append(new IDIV());
+			}
+			else {
+				if (isEvaluable(intraBracket)) {
+					instructionList.append(new PUSH(constantPool, Integer.parseInt(s)));
+				}
+				else {
+					instructionList.append(new ILOAD(variableToLocation.get(s)));
+				}
+			}
+		}
+	}
+	
 	@Override
 	public void visit(Identifier id) {
 		
 		if (isInAssignment) {
 			String varName = id.nodeToken.tokenImage;
-			String typeName = currentScope.getVariableNonRecursive(varName).getType().getTypeName();
 			
-			switch(typeName) {
-				case "int":
-					instructionList.append(new ISTORE(variableToLocation.get(varName)));
-					break;
+			// Non-field case
+			if (variableToLocation.containsKey(varName)){
+				String typeName = currentScope.getVariableNonRecursive(varName).getType().getTypeName();
 				
-				case "boolean":
-					instructionList.append(new ISTORE(variableToLocation.get(varName)));
-					break;
 				
-				case "int[]":
-					instructionList.append(new ASTORE(variableToLocation.get(varName)));
-					break;
-				
-				default:
-					instructionList.append(new ASTORE(variableToLocation.get(varName)));
+				switch(typeName) {
+					case "int":
+						instructionList.append(new ISTORE(variableToLocation.get(varName)));
+						break;
+					
+					case "boolean":
+						instructionList.append(new ISTORE(variableToLocation.get(varName)));
+						break;
+					
+					case "int[]":
+						instructionList.append(new ASTORE(variableToLocation.get(varName)));
+						break;
+					
+					default:
+						instructionList.append(new ASTORE(variableToLocation.get(varName)));
+				}
 			}
+			// Class field case
+			else {
+				String typeName = currentScope.getVariable(varName).getType().getBcelType().getSignature();
+				
+				instructionList.append(new PUTFIELD(constantPool.addFieldref(classGen.getClassName(), varName, typeName)));
+			}
+			
 		}
 	}
 	

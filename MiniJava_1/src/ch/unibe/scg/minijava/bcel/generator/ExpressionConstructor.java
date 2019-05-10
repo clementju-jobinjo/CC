@@ -85,7 +85,6 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 			infixExpression.append(" ");
 		}
 		else {
-			System.out.println("bjlkfdjs");
 			infixExpression.append(id.nodeToken.tokenImage);
 			infixExpression.append(" ");
 		}
@@ -168,7 +167,7 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 //		String expTypeStr = pf.evaluatePostfix(postfixExpression);
 		
 //		if (expTypeStr.equals(Int.IntSingleton.getTypeName())) {
-		infixExpression.append("int["+intraBracketValue+"]");
+		infixExpression.append("newint["+intraBracketValue+"]");
 		infixExpression.append(" ");
 //		}
 //		else {
@@ -178,16 +177,26 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	}
 	
 	
-//	@Override
-//	public void visit(ArrayCall e) {
-////		String pred = infixExpression.substring(infixExpression.length() - 6);
-////		if (pred.equals(IntArray.IntArraySingleton.getTypeName() + " ")) {
-////			infixExpression = infixExpression.delete(infixExpression.length() - 6, infixExpression.length());
-////			infixExpression.append(Int.IntSingleton.getTypeName());
-////			infixExpression.append(" ");
-////		}
-//		
-//	}
+	@Override
+	public void visit(ArrayCall e) {
+//		String pred = infixExpression.substring(infixExpression.length() - 6);
+//		if (pred.equals(IntArray.IntArraySingleton.getTypeName() + " ")) {
+//			infixExpression = infixExpression.delete(infixExpression.length() - 6, infixExpression.length());
+//			infixExpression.append(Int.IntSingleton.getTypeName());
+//			infixExpression.append(" ");
+//		}
+		
+		ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+		e.expression.accept(vis);
+		String intraBracket = vis.getInfixExpression();
+		
+		PostfixExpressionConstructor pf = new PostfixExpressionConstructor();
+		String postfixExpression = pf.postfix(intraBracket);
+		
+		infixExpression = infixExpression.deleteCharAt(infixExpression.length() - 1);
+		infixExpression.append("[" + postfixExpression + "]");
+		infixExpression.append(" ");
+	}
 	
 	
 	@Override
@@ -206,11 +215,43 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 
 		String[] tokens = infixExpression.toString().trim().split("\\s+");
 		String beforeDot = tokens[tokens.length-1];
+		StringBuilder arguments = new StringBuilder();
+		
+		NodeOptional nodeOptional = e.nodeOptional;
+		
+		// (Expression (xxx)*)?
+		if (nodeOptional.present()) {
+			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
+			
+			ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+			nodeSequence.elementAt(0).accept(vis);
+			arguments.append(vis.getInfixExpression().replace(" ", "%"));
+			arguments.deleteCharAt(arguments.length() - 1);
+			
+
+			//  ("," Expression() )*
+			NodeListOptional nodeListOptional2 = (NodeListOptional) nodeSequence.elementAt(1);
+			if (nodeListOptional2.present()) {
+				for (int j = 0; j < nodeListOptional2.size(); j++) {
+					INode node2 = nodeListOptional2.elementAt(j);
+					NodeSequence nodeSequence2 = (NodeSequence) node2;
+					
+					ExpressionConstructor vis2 = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+					nodeSequence2.elementAt(1).accept(vis2);
+					arguments.append(",");
+					arguments.append(vis2.getInfixExpression().replace(" ", "%"));
+
+				}
+			}
+		}
+		
 		
 		String functionName = e.identifier.nodeToken.tokenImage;
-		infixExpression.append("."+functionName+"/"+beforeDot);
+		infixExpression.append("."+functionName + "(" + arguments.toString() + ")/"+beforeDot);
 		infixExpression.append(" ");
 	}
+	
+	
 		
 //		System.out.println(infixExpression.toString());
 //		
@@ -301,5 +342,16 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 //			}
 //			infixExpression.append(methodArguments.get(i).getIdentifier());
 //		}
-
+	private boolean isEvaluable(String exp) {
+		boolean isEvaluable = true;
+		String[] tokens = exp.split(" ");
+		for (String s : tokens) {
+			if (!s.matches("true|false|[0-9]+|\\+|-|==|&&|<|>|!")) {
+				isEvaluable = false;
+				break;
+			}
+		}
+		return isEvaluable;
 	}
+
+}
