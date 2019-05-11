@@ -583,8 +583,13 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 					System.out.println("5");
 						System.out.println("7");
 						
+						// f.length with f an previous defined array
+						if (s.contains(".length")) {
+							instructionList.append(new ARRAYLENGTH());
+						}
+						
 						// new alone
-						if (s.matches("new(.)+\\((.)?\\)\\s")) {
+						else if (s.matches("new(.)+\\((.)?\\)\\s")) {
 							System.out.println("2");
 							int indexOfSecondBracket = postfixExpression.indexOf(")");
 							String className = postfixExpression.substring(3, indexOfSecondBracket - 1);

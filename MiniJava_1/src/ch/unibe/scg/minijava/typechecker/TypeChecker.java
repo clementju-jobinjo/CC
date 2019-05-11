@@ -32,13 +32,13 @@ public class TypeChecker {
 
 	public boolean check(Object node) {
 		INode n = (INode) node;
-		
 		try {
 			// create all types with respective inheritance
 			Map<String, Type> stringToTypes = createAllTypes(n);
-			
+		
 			// create all scopes
 			List<Scope> allScopes = createAllScopes(n, stringToTypes);
+		
 			scopes = allScopes;
 			
 			// evaluate the node
@@ -46,8 +46,9 @@ public class TypeChecker {
 			
 			return true;
 			
-		} catch (RuntimeException e) {
+		} catch (RuntimeException e) {			
 			return false;
+			
 		}
 	}
 	
@@ -76,7 +77,10 @@ public class TypeChecker {
 		
 		// build scopes
 		AllScopesBuilder visitor = new AllScopesBuilder(globalScope, stringToType);
+
+		
 		n.accept(visitor);
+
 		List<Scope> allScopes = visitor.getAllScopes();
 		classOrMethodOrVariableToScope = visitor.getClassOrMethodOrVariableToScope();
 		

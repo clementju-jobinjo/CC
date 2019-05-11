@@ -59,10 +59,11 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 	// MainClass() ( ClassDeclaration() )* < EOF >
 	@Override
 	public void visit(Goal goal) {
-
+		
 		// MainClass
 		MainClass mainClass = goal.mainClass;
 		mainClass.accept(this);
+		
 
 		// ClassDeclaration
 		NodeListOptional nodeList = goal.nodeListOptional;
@@ -72,6 +73,8 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 				node.accept(this);
 			}
 		}
+		
+		
 	}
 
 
@@ -146,13 +149,14 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		// ( MethodDeclaration() )*
 		NodeListOptional nodeListOptional1 = classDeclaration.nodeListOptional1;
 		if (nodeListOptional1.present()) {
-
+			
 			for (int i = 0; i < nodeListOptional1.size(); i++) {
 				MethodDeclaration node = (MethodDeclaration)nodeListOptional1.elementAt(i);
 				node.accept(this);
 			}
 
 		}
+
 	}
 
 
@@ -187,6 +191,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		
 		NodeOptional nodeOptional = methodDeclaration.nodeOptional;
 		if (nodeOptional.present()) {
+			
 			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
 			
 			// First argument
@@ -219,10 +224,10 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 				}
 			}
 		}
-		
+
 		// add method to parent scope's method list
 		scopeMethodDirectAccess.addMethod(new Method(methodName, returnType, args));
-		
+
 		// link method with its internal scope
 		classOrMethodOrVariableToScope.put(methodName, internalMethodScope);
 			

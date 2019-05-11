@@ -71,9 +71,12 @@ public class JavaBytecodeGenerator {
     	TypeChecker typeChecker = new TypeChecker();
     	typeChecker.check(n);
     	
+    	
+    	
     	// code generation
     	Map<String, Scope> classOrMethodOrVariableToScope = typeChecker.getClassOrMethodOrVariableToScope();
     	List<Scope> scopes = typeChecker.getScopes();
+
     	BytecodeGeneratorVisitor2 bytecodeGeneratorVisitor = new BytecodeGeneratorVisitor2(this,cg,mg,il,iFact, classOrMethodOrVariableToScope, scopes);
     	n.accept(bytecodeGeneratorVisitor);
     	

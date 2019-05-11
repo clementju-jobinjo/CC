@@ -86,14 +86,17 @@ public class SanityTest {
 
 		boolean expected = true;
 		Object result = callMethod(instance, "Start", 20, 20);
+		System.out.println("ICI1"+result);
 		assertEquals(expected, result);
 
 		expected = true;
 		result = callMethod(instance, "Start", 20, 37);
+		System.out.println("ICI2"+result);
 		assertEquals(expected, result);
 
 		expected = false;
 		result = callMethod(instance, "Start", 20, 38);
+		System.out.println("ICI3"+result);
 		assertEquals(expected, result);
 
 		expected = false;
@@ -118,6 +121,7 @@ public class SanityTest {
 	private JavaBytecodeGenerator compile(String rule, InputStream input) {
 		JavaBytecodeGenerator jbcg = new JavaBytecodeGenerator();
 		Object node = getAst(rule, input);
+		System.out.println(node.toString());
 		jbcg.generate(node);
 		return jbcg;
 	}
