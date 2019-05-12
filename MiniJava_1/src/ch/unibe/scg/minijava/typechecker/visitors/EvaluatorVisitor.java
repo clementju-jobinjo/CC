@@ -30,14 +30,14 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	private Scope currentScope;
 	private Type typeOfLastVisitedExpression;
 	private Type typeOfLastVisitedIdentifier;
-	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> classToScope;
 	private Map<String, Scope> methodToScope;
 	
 	
-	public EvaluatorVisitor(List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope, Map<String, Scope> methodToScope) {
+	public EvaluatorVisitor(List<Scope> scopes, Map<String, Scope> classToScope, Map<String, Scope> methodToScope) {
 		this.scopes = scopes;
 		currentScope = scopes.get(0);
-		this.classOrMethodOrVariableToScope = classOrMethodOrVariableToScope;
+		this.classToScope = classToScope;
 		this.methodToScope=methodToScope;
 	}
 	
@@ -197,7 +197,7 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	
 	@Override
 	public void visit(Expression exp) {
-		ExpressionTypeConstructor visitor = new ExpressionTypeConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
+		ExpressionTypeConstructor visitor = new ExpressionTypeConstructor(currentScope, scopes, classToScope, methodToScope);
 		exp.accept(visitor);
 		
 		String infixExpression = visitor.getInfixExpression();

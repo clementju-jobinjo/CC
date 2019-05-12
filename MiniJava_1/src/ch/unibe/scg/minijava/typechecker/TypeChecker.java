@@ -27,7 +27,7 @@ import ch.unibe.scg.minijava.typechecker.visitors.EvaluatorVisitor;
  */
 public class TypeChecker {
 	
-	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> classToScope;
 	private Map<String, Scope> methodToScope;
 	private List<Scope> scopes;
 
@@ -83,7 +83,7 @@ public class TypeChecker {
 		n.accept(visitor);
 
 		List<Scope> allScopes = visitor.getAllScopes();
-		classOrMethodOrVariableToScope = visitor.getClassOrMethodOrVariableToScope();
+		classToScope = visitor.getClassToScope();
 		methodToScope = visitor.getMethodToScope();
 
 		
@@ -129,13 +129,13 @@ public class TypeChecker {
 	
 	
 	private void evaluate(INode node, List<Scope> scopes) {
-		EvaluatorVisitor visitor = new EvaluatorVisitor(scopes, classOrMethodOrVariableToScope, methodToScope);
+		EvaluatorVisitor visitor = new EvaluatorVisitor(scopes, classToScope, methodToScope);
 		node.accept(visitor);
 	}
 	
 	
-	public Map<String, Scope> getClassOrMethodOrVariableToScope() {
-		return classOrMethodOrVariableToScope;
+	public Map<String, Scope> getClassToScope() {
+		return classToScope;
 	}
 	
 	public Map<String, Scope> getMethodToScope() {

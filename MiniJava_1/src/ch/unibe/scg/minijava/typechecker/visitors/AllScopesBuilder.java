@@ -31,7 +31,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 
 	private List<Scope> scopes;
 	private Map<String, Type> stringToType;
-	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> classToScope;
 	private Map<String, Scope> methodToScope;
 	private Type currentType;
 	private Scope scopeMethodDirectAccess;
@@ -41,7 +41,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		scopes = new ArrayList<Scope>();
 		scopes.add(globalScope);
 		this.stringToType = stringToType;
-		classOrMethodOrVariableToScope = new HashMap<String, Scope>();
+		classToScope = new HashMap<String, Scope>();
 		methodToScope = new HashMap<String, Scope>();
 		scopeMethodDirectAccess = globalScope;
 	}
@@ -52,8 +52,8 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 	}
 	
 	
-	public Map<String, Scope> getClassOrMethodOrVariableToScope(){
-		return classOrMethodOrVariableToScope;
+	public Map<String, Scope> getClassToScope(){
+		return classToScope;
 	}
 	
 	public Map<String, Scope> getMethodToScope(){
@@ -94,7 +94,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		
 		// Identifier()
 		String className = mainClass.identifier.nodeToken.tokenImage;
-		classOrMethodOrVariableToScope.put(className, currentScope);
+		classToScope.put(className, currentScope);
 		scopes.get(0).addClass(stringToType.get(className));
 		
 		currentScope.addMethod(new Method("main", VoidType.VoidSingleton, new ArrayList<Variable>()));
@@ -116,7 +116,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 			NodeSequence extendsNodeSequence = (NodeSequence) nodeOptExtends.node;
 			Identifier superClassNameIdentifier = (Identifier)extendsNodeSequence.elementAt(1);
 			
-			currentScope = new Scope(classOrMethodOrVariableToScope.get(superClassNameIdentifier.nodeToken.tokenImage), classDeclaration);
+			currentScope = new Scope(classToScope.get(superClassNameIdentifier.nodeToken.tokenImage), classDeclaration);
 		}
 		else {
 			currentScope = new Scope(scopes.get(0), classDeclaration);
@@ -129,7 +129,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		// link class name to scope
 		// Identifier()
 		String className = classDeclaration.identifier.nodeToken.tokenImage;
-		classOrMethodOrVariableToScope.put(className, currentScope);
+		classToScope.put(className, currentScope);
 		
 		// add class to (parent) scope
 		// Identifier -> class name

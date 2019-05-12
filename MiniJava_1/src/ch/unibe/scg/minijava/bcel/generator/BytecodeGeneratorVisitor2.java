@@ -70,6 +70,7 @@ import ch.unibe.scg.minijava.typechecker.types.Method;
 import ch.unibe.scg.minijava.typechecker.types.RootObject;
 import ch.unibe.scg.minijava.typechecker.types.Type;
 import ch.unibe.scg.minijava.typechecker.types.Variable;
+import ch.unibe.scg.minijava.typechecker.visitors.EvaluatorVisitor;
 import ch.unibe.scg.minijava.typechecker.visitors.ExpressionTypeConstructor;
 import ch.unibe.scg.minijava.typechecker.visitors.PostfixExpressionConstructor;
 
@@ -81,34 +82,29 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 	private InstructionList instructionList;
 	private InstructionFactory instructionFactory;
 	private ConstantPoolGen constantPool;
-	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> classToScope;
 	private Map <String, Scope> methodToScope;
 	private List<Scope> scopes;
 	private Scope currentScope;
 	private boolean varDeclarationInClass;
 	private Map<String, Integer> variableToLocation;
-	private String valueOfLastVisitedExpression;
-	private boolean isInWhile;
 	private boolean isInAssignment;
-	private String lastVisitedClass;
 	private String currentClassFunctionCall;
 	
-	public BytecodeGeneratorVisitor2(JavaBytecodeGenerator bytecodeGenerator, ClassGen classGen, MethodGen methodGen, InstructionList instructionList, InstructionFactory instructionFactory, Map<String, Scope> classOrMethodOrVariableToScope, Map<String, Scope> methodToScope, List<Scope> scopes) {
+	public BytecodeGeneratorVisitor2(JavaBytecodeGenerator bytecodeGenerator, ClassGen classGen, MethodGen methodGen, InstructionList instructionList, InstructionFactory instructionFactory, Map<String, Scope> classToScope, Map<String, Scope> methodToScope, List<Scope> scopes) {
 		super();
 		this.bytecodeGenerator = bytecodeGenerator;
 		this.classGen = classGen;
 		this.methodGen = methodGen;
 		this.instructionList = instructionList;
 		this.instructionFactory = instructionFactory;
-		this.classOrMethodOrVariableToScope = classOrMethodOrVariableToScope;
+		this.classToScope = classToScope;
 		this.methodToScope = methodToScope;
 		this.constantPool = classGen.getConstantPool();
 		this.scopes = scopes;
 		currentScope = scopes.get(0);
 		varDeclarationInClass = false;
 		variableToLocation = new HashMap<String, Integer>();
-		valueOfLastVisitedExpression = new String();
-		isInWhile = false;
 		isInAssignment = false;
 		currentClassFunctionCall = new String();
 	}
@@ -122,7 +118,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		String className = classDeclaration.identifier.nodeToken.tokenImage;
 		
 		// change current scope
-		currentScope = classOrMethodOrVariableToScope.get(className);
+		currentScope = classToScope.get(className);
 		
 		String superClassName = currentScope.getScopeEnglobant().getTypeFromString(className).getParentType().getBcelType().toString();
 
@@ -172,13 +168,13 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 	public void visit(MainClass mainClass) {
 		String className = mainClass.identifier.nodeToken.tokenImage;
 		System.out.println(className);
-		System.out.println(classOrMethodOrVariableToScope.get(className));
-		for (String test:classOrMethodOrVariableToScope.keySet()) {
+		System.out.println(classToScope.get(className));
+		for (String test:classToScope.keySet()) {
 			System.out.println(test);
 		}
 		
 		
-		currentScope = classOrMethodOrVariableToScope.get(className);
+		currentScope = classToScope.get(className);
 		
 		classGen = new ClassGen(className, RootObject.RootObjectSingleton.getBcelType().toString(), className + ".java", Const.ACC_PUBLIC | Const.ACC_SUPER, new String[]{});
 		
@@ -242,7 +238,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		currentScope = methodToScope.get(methodName);
 		System.out.println("bonjour");
 		
-		for(String test: classOrMethodOrVariableToScope.keySet()) {
+		for(String test: classToScope.keySet()) {
 			System.out.println(test);
 		}
 	
@@ -436,7 +432,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(Expression exp) {
 
-		ExpressionConstructor visitor = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
+		ExpressionConstructor visitor = new ExpressionConstructor(currentScope, scopes, classToScope, methodToScope);
 		exp.accept(visitor);
 		
 		String infixExpression = visitor.getInfixExpression();
@@ -619,7 +615,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 							String[] slashTokens = s.split("/");
 							String functionName = slashTokens[0].substring(1, slashTokens[0].indexOf("("));
 
-							Method m = classOrMethodOrVariableToScope.get(currentClassFunctionCall).getMethod(functionName);
+							Method m = classToScope.get(currentClassFunctionCall).getMethod(functionName);
 							org.apache.bcel.generic.Type returnType = m.getReturnType().getBcelType();
 							
 							// ARGUMENTS
@@ -629,7 +625,10 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 							
 							for (String argExp : argsTokens) {
 								if (argExp.length() > 0) {
-									generateIntrabracketBytecode(argExp, 1);
+									System.out.println("ARG EXP: " + argExp);
+									PostfixExpressionConstructor pfconst = new PostfixExpressionConstructor();
+									String postfixArgExp = pfconst.postfix(argExp);
+									generateIntrabracketBytecode(postfixArgExp, 1);
 								}
 							}
 							
@@ -647,12 +646,12 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 							currentClassFunctionCall = methodToScope.get(functionName).getScopeEnglobant().getMethod(functionName).getReturnType().getTypeName();
 						}
 				}
-				// new a la volee
+				// new object on the fly
 				else if(s.contains("new")) {
 					System.out.println("*Salut");
 					int indexOfSecondBracket = postfixExpression.indexOf(")");
 					String className = postfixExpression.substring(3, indexOfSecondBracket - 1);
-					lastVisitedClass = className;
+
 					instructionList.append(instructionFactory.createNew(className));
 					instructionList.append(new DUP());
 					instructionList.append(instructionFactory.createInvoke(className, "<init>", org.apache.bcel.generic.Type.VOID, new org.apache.bcel.generic.Type[0], Const.INVOKESPECIAL));
@@ -797,21 +796,11 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		}
 	}
 	
-	@Override
-	public void visit(IntegerLiteral i) {
-		instructionList.append(new PUSH(constantPool, Integer.parseInt(i.nodeToken.tokenImage)));
-	}
-	
 //	@Override
-//	public void visit(IntArrayConstructionCall iACC) {
-//		iACC.expression.accept(this);
-//		instructionList.append(new NEWARRAY(BasicType.INT));
+//	public void visit(IntegerLiteral i) {
+//		instructionList.append(new PUSH(constantPool, Integer.parseInt(i.nodeToken.tokenImage)));
 //	}
 //	
-//	@Override
-//	public void visit(DotArrayLength l) {
-//		instructionList.append(new ARRAYLENGTH());
-//	}
 	
 	@Override
 	public void visit(PrintStatement st) {

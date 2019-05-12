@@ -36,14 +36,14 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 	private StringBuilder infixExpression;
 	private Scope currentScope;
 	private List<Scope> scopes;
-	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> classToScope;
 	private Map<String, Scope> methodToScope;
 	
-	public ExpressionTypeConstructor(Scope currentScope, List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope, Map<String, Scope> methodToScope) {
+	public ExpressionTypeConstructor(Scope currentScope, List<Scope> scopes, Map<String, Scope> classToScope, Map<String, Scope> methodToScope) {
 		infixExpression = new StringBuilder();
 		this.currentScope = currentScope;
 		this.scopes = scopes;
-		this.classOrMethodOrVariableToScope = classOrMethodOrVariableToScope;
+		this.classToScope = classToScope;
 	}
 	
 	
@@ -149,7 +149,7 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(IntArrayConstructionCall e) {
 
-		ExpressionTypeConstructor vis = new ExpressionTypeConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
+		ExpressionTypeConstructor vis = new ExpressionTypeConstructor(currentScope, scopes, classToScope, methodToScope);
 		e.expression.accept(vis);
 		String intraBracketType = vis.getInfixExpression();
 		
@@ -205,7 +205,7 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 		String functionName = e.identifier.nodeToken.tokenImage;
 		
 		// scope of thisType class
-		Scope thisScope = classOrMethodOrVariableToScope.get(thisType);
+		Scope thisScope = classToScope.get(thisType);
 		
 		Method method = thisScope.getMethod(functionName);
 		
@@ -224,7 +224,7 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 		if (nodeOptional.present()) {
 			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
 			
-			EvaluatorVisitor visitor = new EvaluatorVisitor(scopes, classOrMethodOrVariableToScope, methodToScope);
+			EvaluatorVisitor visitor = new EvaluatorVisitor(scopes, classToScope, methodToScope);
 			nodeSequence.elementAt(0).accept(visitor);
 			argsType.add(visitor.getTypeOfLastExpression());
 			
@@ -236,7 +236,7 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 					INode node2 = nodeListOptional2.elementAt(j);
 					NodeSequence nodeSequence2 = (NodeSequence) node2;
 					
-					EvaluatorVisitor visitor2 = new EvaluatorVisitor(scopes, classOrMethodOrVariableToScope, methodToScope);
+					EvaluatorVisitor visitor2 = new EvaluatorVisitor(scopes, classToScope, methodToScope);
 					nodeSequence2.elementAt(1).accept(visitor2);
 					argsType.add(visitor2.getTypeOfLastExpression());
 
