@@ -131,7 +131,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		instructionFactory = new InstructionFactory(classGen);
 		
 		
-		
 		// ( VarDeclaration() )*
 		varDeclarationInClass = true;
 		
@@ -145,6 +144,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		
 		varDeclarationInClass = false;
 		
+		
 		// ( MethodDeclaration() )*
 		NodeListOptional nodeListOptional1 = classDeclaration.nodeListOptional1;
 		if (nodeListOptional1.present()) {
@@ -153,6 +153,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				node.accept(this);
 			}
 		}
+		
 		
 		// generate class
 		JavaClass javaClass = classGen.getJavaClass();
@@ -164,15 +165,12 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		}
 	}
 	
+	
 	@Override
 	public void visit(MainClass mainClass) {
-		String className = mainClass.identifier.nodeToken.tokenImage;
-		System.out.println(className);
-		System.out.println(classToScope.get(className));
-		for (String test:classToScope.keySet()) {
-			System.out.println(test);
-		}
 		
+		// similar to ClassDeclaration
+		String className = mainClass.identifier.nodeToken.tokenImage;		
 		
 		currentScope = classToScope.get(className);
 		
@@ -188,8 +186,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		// main method
 		instructionList = new InstructionList();
 		
-		
-		System.out.println(currentScope.toString());
 		Method m = currentScope.getMethod("main");
 		currentScope = methodToScope.get(m.getIdentifier());
 		
@@ -235,11 +231,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		String methodName = methodDeclaration.identifier.nodeToken.tokenImage;
 		
 		currentScope = methodToScope.get(methodName);
-		System.out.println("bonjour");
-		
-		for(String test: classToScope.keySet()) {
-			System.out.println(test);
-		}
 	
 		Method method = currentScope.getScopeEnglobant().getMethodNonRecursive(methodName);
 		
@@ -274,6 +265,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				node.accept(this);
 			}
 		}
+		
 		
 		// ( Statement() )*
 		NodeListOptional nodeListOptional1 = methodDeclaration.nodeListOptional1;
@@ -310,7 +302,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		String varName = varDeclaration.identifier.nodeToken.tokenImage;
 		Variable var = currentScope.getVariable(varName);
 		
-		
 		// in class 
 		if (varDeclarationInClass) {
 			classGen.addField(new FieldGen(Const.ACC_PUBLIC, var.getType().getBcelType(), varName, constantPool).getField());
@@ -318,7 +309,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		else {
 			LocalVariableGen localVariableGen = methodGen.addLocalVariable(varName + "_0", var.getType().getBcelType(), null, null);
 			variableToLocation.put(varName, localVariableGen.getIndex());
-			System.out.println("VARNAME: " + varName + ", INDEX: " + localVariableGen.getIndex());
 		}
 	}
 	
@@ -326,7 +316,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 	// "if" < PARENTHESIS_LEFT > Expression() < PARENTHESIS_RIGHT > Statement() "else" Statement()
 	@Override
 	public void visit(IfStatement ifStatement) {
-		
 		// Expression
 		ifStatement.expression.accept(this);
 		InstructionHandle beginIf = instructionList.getEnd();
@@ -341,7 +330,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		
 		instructionList.append(beginIf, new IFEQ(endIf.getNext()));
 		instructionList.append(endIf, new GOTO(endElse));
-		
 	}
 	
 	
@@ -372,11 +360,8 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(AssignmentStatementIdentifierLeft st) {
 		isInAssignment = true;
-		System.out.println("Assignment");
-		// Identifier()
-//		String varName = st.identifier.nodeToken.tokenImage;
-//		int index = variableToLocation.get(varName);
 		
+		// if variable is a class field
 		if (!variableToLocation.containsKey(st.identifier.nodeToken.tokenImage)) {
 			instructionList.append(new ALOAD(0));
 		}
@@ -387,12 +372,7 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		// Identifier()
 		st.identifier.accept(this);
 		
-//		instructionList.insert(new ALOAD(0));
-//		int i = this.constantPool.addFieldref(className, varName, "I");
-//		instructionList.append(new PUTFIELD(i));
-		
 		isInAssignment = false;
-		
 	}
 	
 	
@@ -421,13 +401,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 	}
 	
 	
-//	// [ Expression() ]
-//	@Override
-//	public void visit (ArrayAccess arrayAccess) {
-//		arrayAccess.expression.accept(this);
-//	}
-	
-	
 	@Override
 	public void visit(Expression exp) {
 
@@ -435,21 +408,16 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		exp.accept(visitor);
 		
 		String infixExpression = visitor.getInfixExpression();
-		
-		System.out.println("INFIX: " + infixExpression);
 
 		PostfixExpressionConstructor pf = new PostfixExpressionConstructor();
 		String postfixExpression = pf.postfix(infixExpression);
 		
-		System.out.println("POSTFIX: " + postfixExpression);
-		
 		String[] tokens = postfixExpression.split(" ");
 		
-		
-		
+
 		// Array
 		if (infixExpression.length() > 4 && infixExpression.contains("[")) {
-			System.out.println("02934i");
+
 			// Expression -> new int[1]
 			int firstBracket = infixExpression.indexOf("[");
 			if (infixExpression.startsWith("newint")) {
@@ -494,9 +462,8 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				instructionList.append(new IALOAD());
 			}
 		}
-		// Object constructor alone
+		// Object constructor alone: ex: return new Foo() OR a = new Foo()
 		else if (postfixExpression.matches("new(.)+\\((.)?\\)\\s") && !postfixExpression.contains(".")) {
-			System.out.println("2");
 			int indexOfSecondBracket = postfixExpression.indexOf(")");
 			String className = postfixExpression.substring(3, indexOfSecondBracket - 1);
 			
@@ -505,9 +472,9 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 			instructionList.append(instructionFactory.createInvoke(className, "<init>", org.apache.bcel.generic.Type.VOID, new org.apache.bcel.generic.Type[0], Const.INVOKESPECIAL));
 			currentClassFunctionCall = className;
 		}
-		// If the postfix expression is a constant
+		// If the postfix expression is a constant value (saves some bytecode instructions)
 		else if (isEvaluable(postfixExpression)) {
-			System.out.println("3");
+			
 			String val = pf.evaluatePostfixValue(postfixExpression);
 			if (val.equals("true")) {
 				instructionList.append(new PUSH(constantPool, true));
@@ -520,11 +487,9 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 			}
 		}
 		else {
-			System.out.println("4");
 			for (String s : tokens) {
-				System.out.println("----------TOKEN"+ s );
+				
 				if(s.equals("")) {
-					System.out.println("test");
 					continue;
 				}
 				if (s.equals("+")) {
@@ -589,8 +554,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				}
 				// In the case of the pattern .function()
 				else if (s.contains(".")) {
-					System.out.println("5");
-						System.out.println("7");
 						
 						// f.length with f an previous defined array
 						if (s.contains(".length")) {
@@ -599,7 +562,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 						
 						// new alone
 						else if (s.matches("new(.)+\\((.)?\\)\\s")) {
-							System.out.println("2");
 							int indexOfSecondBracket = postfixExpression.indexOf(")");
 							String className = postfixExpression.substring(3, indexOfSecondBracket - 1);
 							
@@ -624,7 +586,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 							
 							for (String argExp : argsTokens) {
 								if (argExp.length() > 0) {
-									System.out.println("ARG EXP: " + argExp);
 									PostfixExpressionConstructor pfconst = new PostfixExpressionConstructor();
 									String postfixArgExp = pfconst.postfix(argExp);
 									generateIntrabracketBytecode(postfixArgExp, 1);
@@ -647,7 +608,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				}
 				// new object on the fly
 				else if(s.contains("new")) {
-					System.out.println("*Salut");
 					int indexOfSecondBracket = postfixExpression.indexOf(")");
 					String className = postfixExpression.substring(3, indexOfSecondBracket - 1);
 
@@ -658,7 +618,6 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 				}
 				// Variable for instance f.function()
 				else if (!s.matches("[0-9]+")) {
-					System.out.println("8");
 					
 					// Non-field case
 					if (variableToLocation.containsKey(s)){
@@ -721,18 +680,13 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 			secondBracket = infixExpression.indexOf("]");
 			intraBracket = infixExpression.substring(firstBracket + 1, secondBracket);
 			intraBracketTokens = intraBracket.split(" ");
-			System.out.println("jjjjjjjj");
 		}
 		else {
 			intraBracket = infixExpression;
 			intraBracketTokens = intraBracket.split(" ");
-			System.out.println("nnnnnn");
 		}
 		
-		System.out.println("intrabracker"+intraBracket);
-		
 		for (String s : intraBracketTokens) {
-			System.out.println("SSSSSSS"+s);
 			if (s.equals("+")) {
 				instructionList.append(new IADD());
 			}
@@ -750,12 +704,12 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 					instructionList.append(new PUSH(constantPool, Integer.parseInt(s)));
 				}
 				else {
-					
 					instructionList.append(new ILOAD(variableToLocation.get(s)));
 				}
 			}
 		}
 	}
+	
 	
 	@Override
 	public void visit(Identifier id) {
@@ -795,16 +749,11 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		}
 	}
 	
-//	@Override
-//	public void visit(IntegerLiteral i) {
-//		instructionList.append(new PUSH(constantPool, Integer.parseInt(i.nodeToken.tokenImage)));
-//	}
-//	
 	
 	@Override
 	public void visit(PrintStatement st) {
 		ObjectType javaPrintStream = new ObjectType("java.io.PrintStream");
-		//InstructionFactory factory = new InstructionFactory(classGen);
+
 		instructionList.append(instructionFactory.createFieldAccess("java.lang.System", "out", javaPrintStream, Const.GETSTATIC));
 		
 		st.expression.accept(this);
