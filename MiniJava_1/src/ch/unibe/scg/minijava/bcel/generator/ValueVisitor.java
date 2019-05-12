@@ -33,12 +33,14 @@ public class ValueVisitor extends DepthFirstVoidVisitor {
 	private String valueOfLastVisitedExpression;
 	private Type typeOfLastVisitedIdentifier;
 	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> methodToScope;
 	
 	
-	public ValueVisitor(List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope) {
+	public ValueVisitor(List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope,Map<String, Scope> methodToScope ) {
 		this.scopes = scopes;
 		currentScope = scopes.get(0);
 		this.classOrMethodOrVariableToScope = classOrMethodOrVariableToScope;
+		this.methodToScope = methodToScope;
 	}
 	
 
@@ -60,7 +62,7 @@ public class ValueVisitor extends DepthFirstVoidVisitor {
 	public void visit(MethodDeclaration md) {
 		
 		// get parent scope of the method (the one containing its definition)
-		Scope scope = classOrMethodOrVariableToScope.get(md.identifier.nodeToken.tokenImage);
+		Scope scope = methodToScope.get(md.identifier.nodeToken.tokenImage);
 		
 		// get method object
 		Method method = scope.getMethod(md.identifier.nodeToken.tokenImage);
@@ -202,7 +204,7 @@ public class ValueVisitor extends DepthFirstVoidVisitor {
 	
 	@Override
 	public void visit(Expression exp) {
-		ExpressionConstructor visitor = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+		ExpressionConstructor visitor = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
 		exp.accept(visitor);
 		
 		String infixExpression = visitor.getInfixExpression();

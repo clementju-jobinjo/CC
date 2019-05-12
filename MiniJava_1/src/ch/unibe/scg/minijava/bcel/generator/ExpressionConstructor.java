@@ -38,11 +38,13 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	private Scope currentScope;
 	private List<Scope> scopes;
 	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> methodToScope;
 	
-	public ExpressionConstructor(Scope currentScope, List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope) {
+	public ExpressionConstructor(Scope currentScope, List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope, Map<String, Scope> methodToScope) {
 		infixExpression = new StringBuilder();
 		this.currentScope = currentScope;
 		this.scopes = scopes;
+		this.methodToScope=methodToScope;
 		this.classOrMethodOrVariableToScope = classOrMethodOrVariableToScope;
 	}
 	
@@ -155,7 +157,7 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(IntArrayConstructionCall e) {
 
-		ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+		ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
 		e.expression.accept(vis);
 		String intraBracket = vis.getInfixExpression();
 		
@@ -186,7 +188,7 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 //			infixExpression.append(" ");
 //		}
 		
-		ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+		ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
 		e.expression.accept(vis);
 		String intraBracket = vis.getInfixExpression();
 		
@@ -223,7 +225,7 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 		if (nodeOptional.present()) {
 			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
 			
-			ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+			ExpressionConstructor vis = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
 			nodeSequence.elementAt(0).accept(vis);
 			arguments.append(vis.getInfixExpression().replace(" ", "%"));
 			arguments.deleteCharAt(arguments.length() - 1);
@@ -236,7 +238,7 @@ public class ExpressionConstructor extends DepthFirstVoidVisitor {
 					INode node2 = nodeListOptional2.elementAt(j);
 					NodeSequence nodeSequence2 = (NodeSequence) node2;
 					
-					ExpressionConstructor vis2 = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+					ExpressionConstructor vis2 = new ExpressionConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
 					nodeSequence2.elementAt(1).accept(vis2);
 					arguments.append(",");
 					arguments.append(vis2.getInfixExpression().replace(" ", "%"));

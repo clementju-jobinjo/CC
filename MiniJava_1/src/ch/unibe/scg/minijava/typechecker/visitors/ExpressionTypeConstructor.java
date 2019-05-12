@@ -37,8 +37,9 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 	private Scope currentScope;
 	private List<Scope> scopes;
 	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> methodToScope;
 	
-	public ExpressionTypeConstructor(Scope currentScope, List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope) {
+	public ExpressionTypeConstructor(Scope currentScope, List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope, Map<String, Scope> methodToScope) {
 		infixExpression = new StringBuilder();
 		this.currentScope = currentScope;
 		this.scopes = scopes;
@@ -148,7 +149,7 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 	@Override
 	public void visit(IntArrayConstructionCall e) {
 
-		ExpressionTypeConstructor vis = new ExpressionTypeConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+		ExpressionTypeConstructor vis = new ExpressionTypeConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
 		e.expression.accept(vis);
 		String intraBracketType = vis.getInfixExpression();
 		
@@ -201,7 +202,6 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 
 		String[] tokens = infixExpression.toString().trim().split("\\s+");
 		String thisType = tokens[tokens.length-1];
-		System.out.println("DJKLAJLKDJLKJFLKDJFLé"+thisType);
 		String functionName = e.identifier.nodeToken.tokenImage;
 		
 		// scope of thisType class
@@ -224,7 +224,7 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 		if (nodeOptional.present()) {
 			NodeSequence nodeSequence = (NodeSequence) nodeOptional.node;
 			
-			EvaluatorVisitor visitor = new EvaluatorVisitor(scopes, classOrMethodOrVariableToScope);
+			EvaluatorVisitor visitor = new EvaluatorVisitor(scopes, classOrMethodOrVariableToScope, methodToScope);
 			nodeSequence.elementAt(0).accept(visitor);
 			argsType.add(visitor.getTypeOfLastExpression());
 			
@@ -236,7 +236,7 @@ public class ExpressionTypeConstructor extends DepthFirstVoidVisitor {
 					INode node2 = nodeListOptional2.elementAt(j);
 					NodeSequence nodeSequence2 = (NodeSequence) node2;
 					
-					EvaluatorVisitor visitor2 = new EvaluatorVisitor(scopes, classOrMethodOrVariableToScope);
+					EvaluatorVisitor visitor2 = new EvaluatorVisitor(scopes, classOrMethodOrVariableToScope, methodToScope);
 					nodeSequence2.elementAt(1).accept(visitor2);
 					argsType.add(visitor2.getTypeOfLastExpression());
 

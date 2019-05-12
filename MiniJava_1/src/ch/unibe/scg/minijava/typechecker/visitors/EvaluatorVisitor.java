@@ -31,12 +31,14 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	private Type typeOfLastVisitedExpression;
 	private Type typeOfLastVisitedIdentifier;
 	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> methodToScope;
 	
 	
-	public EvaluatorVisitor(List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope) {
+	public EvaluatorVisitor(List<Scope> scopes, Map<String, Scope> classOrMethodOrVariableToScope, Map<String, Scope> methodToScope) {
 		this.scopes = scopes;
 		currentScope = scopes.get(0);
 		this.classOrMethodOrVariableToScope = classOrMethodOrVariableToScope;
+		this.methodToScope=methodToScope;
 	}
 	
 
@@ -58,7 +60,7 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	public void visit(MethodDeclaration md) {
 		
 		// get parent scope of the method (the one containing its definition)
-		Scope scope = classOrMethodOrVariableToScope.get(md.identifier.nodeToken.tokenImage);
+		Scope scope = methodToScope.get(md.identifier.nodeToken.tokenImage);
 		
 		// get method object
 		Method method = scope.getMethod(md.identifier.nodeToken.tokenImage);
@@ -195,7 +197,7 @@ public class EvaluatorVisitor extends DepthFirstVoidVisitor {
 	
 	@Override
 	public void visit(Expression exp) {
-		ExpressionTypeConstructor visitor = new ExpressionTypeConstructor(currentScope, scopes, classOrMethodOrVariableToScope);
+		ExpressionTypeConstructor visitor = new ExpressionTypeConstructor(currentScope, scopes, classOrMethodOrVariableToScope, methodToScope);
 		exp.accept(visitor);
 		
 		String infixExpression = visitor.getInfixExpression();

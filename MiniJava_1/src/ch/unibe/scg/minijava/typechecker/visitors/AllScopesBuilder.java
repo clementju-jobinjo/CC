@@ -32,6 +32,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 	private List<Scope> scopes;
 	private Map<String, Type> stringToType;
 	private Map<String, Scope> classOrMethodOrVariableToScope;
+	private Map<String, Scope> methodToScope;
 	private Type currentType;
 	private Scope scopeMethodDirectAccess;
 
@@ -41,6 +42,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		scopes.add(globalScope);
 		this.stringToType = stringToType;
 		classOrMethodOrVariableToScope = new HashMap<String, Scope>();
+		methodToScope = new HashMap<String, Scope>();
 		scopeMethodDirectAccess = globalScope;
 	}
 	
@@ -52,6 +54,10 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 	
 	public Map<String, Scope> getClassOrMethodOrVariableToScope(){
 		return classOrMethodOrVariableToScope;
+	}
+	
+	public Map<String, Scope> getMethodToScope(){
+		return methodToScope;
 	}
 
 	
@@ -92,6 +98,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		scopes.get(0).addClass(stringToType.get(className));
 		
 		currentScope.addMethod(new Method("main", VoidType.VoidSingleton, new ArrayList<Variable>()));
+		methodToScope.put("main", currentScope);
 	}
 
 
@@ -229,7 +236,7 @@ public class AllScopesBuilder extends DepthFirstVoidVisitor {
 		scopeMethodDirectAccess.addMethod(new Method(methodName, returnType, args));
 
 		// link method with its internal scope
-		classOrMethodOrVariableToScope.put(methodName, internalMethodScope);
+		methodToScope.put(methodName, internalMethodScope);
 			
 		scopes.add(internalMethodScope);
 	
