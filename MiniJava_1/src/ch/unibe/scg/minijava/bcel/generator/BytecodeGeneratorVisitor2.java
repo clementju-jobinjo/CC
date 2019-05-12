@@ -220,13 +220,12 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 		}
 		
 		instructionList.append(new RETURN());
-
+		
+		methodGen.removeNOPs();
 		methodGen.setMaxStack();
 		methodGen.setMaxLocals();
 
 		bytecodeGenerator.addMethod(classGen, methodGen);
-		
-		//instructionList.dispose();
 	}
 	
 	
@@ -298,11 +297,11 @@ public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {
 			instructionList.append(new ARETURN());
 		}
 		
+		methodGen.removeNOPs();
 		methodGen.setMaxStack();
 		methodGen.setMaxLocals();
-		bytecodeGenerator.addMethod(classGen, methodGen);
-		//instructionList.dispose();
 		
+		bytecodeGenerator.addMethod(classGen, methodGen);
 	}
 	
 	
