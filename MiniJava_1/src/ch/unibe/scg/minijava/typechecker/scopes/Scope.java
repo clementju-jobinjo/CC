@@ -142,12 +142,9 @@ public class Scope {
 		String metIdentifier = met.getIdentifier();
 		List<Variable> metArguments = met.getArguments();
 		for (Method m : methods) {
-			System.out.println(m.getIdentifier());
-			System.out.println("10");
 			String mIdentifier = m.getIdentifier();
 			List<Variable> mArguments = m.getArguments();
 			boolean sameArguments = true;
-			System.out.println("11");
 	
 			// check if the list of arguments is exactly the same
 			for (int i = 0; i < metArguments.size(); i++) {
@@ -155,21 +152,16 @@ public class Scope {
 					sameArguments = false;
 					break;
 				}
-				System.out.println("25");
-				System.out.println(metArguments.get(0).getIdentifier());
-				System.out.println(mArguments.size());
+
 				if (! metArguments.get(i).getIdentifier().equals(mArguments.get(i).getIdentifier())) {
-					System.out.println("30");
 					sameArguments = false;
 					break;
 				}
 			}
-			System.out.println("12");
 			// exact same definition same parameters, different return types
 			if (sameArguments && metIdentifier.equals(mIdentifier)) {
 				throw new RuntimeException("Cannot add two methods with the same name and parameters to the same scope. Method: " + metIdentifier);
 			}
-			System.out.println("13");
 		}
 		methods.add(met);
 		

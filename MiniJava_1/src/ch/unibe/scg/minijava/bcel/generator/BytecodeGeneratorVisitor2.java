@@ -26,7 +26,6 @@ import org.apache.bcel.generic.IDIV;
 import org.apache.bcel.generic.IFEQ;
 import org.apache.bcel.generic.IFGT;
 import org.apache.bcel.generic.IFNE;
-import org.apache.bcel.generic.IF_ICMPGE;
 import org.apache.bcel.generic.ILOAD;
 import org.apache.bcel.generic.IMUL;
 import org.apache.bcel.generic.IRETURN;
@@ -45,17 +44,13 @@ import org.apache.bcel.generic.PUTFIELD;
 import org.apache.bcel.generic.RETURN;
 import org.apache.bcel.generic.SWAP;
 
-import ch.unibe.scg.javacc.syntaxtree.ArrayAccess;
 import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementArrayLeft;
 import ch.unibe.scg.javacc.syntaxtree.AssignmentStatementIdentifierLeft;
 import ch.unibe.scg.javacc.syntaxtree.ClassDeclaration;
-import ch.unibe.scg.javacc.syntaxtree.DotArrayLength;
 import ch.unibe.scg.javacc.syntaxtree.Expression;
 import ch.unibe.scg.javacc.syntaxtree.INode;
 import ch.unibe.scg.javacc.syntaxtree.Identifier;
 import ch.unibe.scg.javacc.syntaxtree.IfStatement;
-import ch.unibe.scg.javacc.syntaxtree.IntArrayConstructionCall;
-import ch.unibe.scg.javacc.syntaxtree.IntegerLiteral;
 import ch.unibe.scg.javacc.syntaxtree.MainClass;
 import ch.unibe.scg.javacc.syntaxtree.MethodDeclaration;
 import ch.unibe.scg.javacc.syntaxtree.NodeListOptional;
@@ -68,10 +63,7 @@ import ch.unibe.scg.javacc.visitor.DepthFirstVoidVisitor;
 import ch.unibe.scg.minijava.typechecker.scopes.Scope;
 import ch.unibe.scg.minijava.typechecker.types.Method;
 import ch.unibe.scg.minijava.typechecker.types.RootObject;
-import ch.unibe.scg.minijava.typechecker.types.Type;
 import ch.unibe.scg.minijava.typechecker.types.Variable;
-import ch.unibe.scg.minijava.typechecker.visitors.EvaluatorVisitor;
-import ch.unibe.scg.minijava.typechecker.visitors.ExpressionTypeConstructor;
 import ch.unibe.scg.minijava.typechecker.visitors.PostfixExpressionConstructor;
 
 public class BytecodeGeneratorVisitor2 extends DepthFirstVoidVisitor {

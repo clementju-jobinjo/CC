@@ -1,12 +1,10 @@
 package ch.unibe.scg.minijava.bcel.generator;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import ch.unibe.scg.javacc.syntaxtree.ArrayCall;
 import ch.unibe.scg.javacc.syntaxtree.BinaryOperator;
-import ch.unibe.scg.javacc.syntaxtree.ClassDeclaration;
 import ch.unibe.scg.javacc.syntaxtree.DotArrayLength;
 import ch.unibe.scg.javacc.syntaxtree.DotFunctionCall;
 import ch.unibe.scg.javacc.syntaxtree.FalseExpression;
@@ -23,14 +21,9 @@ import ch.unibe.scg.javacc.syntaxtree.ThisExpression;
 import ch.unibe.scg.javacc.syntaxtree.TrueExpression;
 import ch.unibe.scg.javacc.syntaxtree.UnaryOperator;
 import ch.unibe.scg.javacc.visitor.DepthFirstVoidVisitor;
-import ch.unibe.scg.minijava.typechecker.types.Int;
-import ch.unibe.scg.minijava.typechecker.types.IntArray;
-import ch.unibe.scg.minijava.typechecker.types.Method;
-import ch.unibe.scg.minijava.typechecker.types.Type;
 import ch.unibe.scg.minijava.typechecker.types.Variable;
 import ch.unibe.scg.minijava.typechecker.visitors.PostfixExpressionConstructor;
 import ch.unibe.scg.minijava.typechecker.scopes.Scope;
-import ch.unibe.scg.minijava.typechecker.types.Boolean;
 
 public class ExpressionConstructor extends DepthFirstVoidVisitor {
 	
